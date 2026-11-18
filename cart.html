@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Cart | Vreymar Hardware</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/site.css"/>
+<style>
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start;padding-bottom:140px}
+.layout>div>.card{margin-bottom:12px!important}
+/* progress: four steps on one track */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;margin-bottom:12px;border-radius:var(--r-md);background:var(--sunken);border:1px solid var(--line)}
+.st{padding:10px 12px;border-radius:var(--r-sm);font-weight:500;font-size:14px;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}
+.st::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.5}
+.st.on{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.st.on::before{background:var(--accent-2);opacity:1}
+/* line items: tile 14px inside the 20px card (6px inset) */
+.ci{display:grid;grid-template-columns:76px minmax(0,1fr) auto auto 40px;gap:18px;align-items:center;padding:10px 16px 10px 10px}
+.ci+.ci{border-top:1px solid var(--line)}
+.ci-img{width:76px;height:76px;border-radius:var(--r-md);background:var(--tile);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;isolation:isolate}
+.ci-img .art{width:56px;height:56px}
+.ci-img img{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;mix-blend-mode:multiply}
+.ci-img:has(img) .art{display:none}
+.ci-name{font-size:16px;font-weight:500;line-height:1.3;letter-spacing:-.01em}
+.ci-meta{font-size:14px;color:var(--muted);margin-top:3px}
+.ci-warn{font-size:14px;color:var(--danger);font-weight:500;margin-top:4px}
+.ci-total{font-size:18px;font-weight:600;letter-spacing:-.025em;min-width:100px;text-align:right;font-variant-numeric:tabular-nums}
+.ci-rm{width:40px;height:40px;border:0;border-radius:var(--r-pill);background:transparent;cursor:pointer;color:var(--muted);transition:background-color .15s,color .15s}
+.ci-rm:hover{background:var(--danger-tint);color:var(--danger)}
+/* two methods as big choice cards */
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.method{text-align:left;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--sunken);padding:18px 20px;cursor:pointer;transition:background-color .2s,border-color .2s,box-shadow .2s;position:relative}
+.method:hover{border-color:var(--line-2)}
+.method[aria-pressed="true"]{background:var(--paper);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.method b{display:block;font-size:19px;font-weight:600;letter-spacing:-.025em;line-height:1.15}
+.method span{display:block;font-size:14px;margin-top:6px;color:var(--ink-2);line-height:1.5}
+.method em{font-style:normal;font-weight:600;color:var(--success)}
+.promo-row{display:flex;gap:8px}
+.promo-row .input{text-transform:uppercase!important;letter-spacing:.06em}
+.promo-msg{font-size:15px;font-weight:500;margin-top:8px}
+.summary{position:sticky;top:calc(var(--nav-h) + 16px);border-radius:var(--r-xl)}
+.summary .card-body{padding:26px 24px 24px}
+.summary .card-title{font-size:26px!important;letter-spacing:-.035em}
+.sr{display:flex;justify-content:space-between;font-size:15px;padding:7px 0}
+.sr span:first-child{color:var(--ink-2)}
+.sr b{font-weight:500;font-variant-numeric:tabular-nums}
+.sr .green{color:var(--success)}.sr .red{color:var(--danger)}
+/* the total band: 28px card, 8px from the edge, so 20px corners */
+.stotal{display:flex;justify-content:space-between;align-items:baseline;margin:14px -16px 18px;padding:18px 18px;border-radius:var(--r-lg);background:var(--accent-grad);color:var(--on-accent)}
+.stotal span{font-weight:500}
+.stotal b{font-size:36px;font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.free-bar{background:var(--sunken);border-radius:var(--r-md);padding:12px 14px;margin-bottom:12px;font-size:14px}
+.free-bar .track{height:6px;border-radius:var(--r-pill);background:var(--hover-2);margin-top:8px;overflow:hidden}
+.free-bar .fill{height:100%;border-radius:var(--r-pill);background:linear-gradient(in oklch 90deg,oklch(86% .17 96),oklch(76% .19 58));transition:width .5s var(--ease-out)}
+.avail-note{font-size:14px;color:var(--ink-2);margin-top:16px;line-height:1.55}
+.avail-note a{font-weight:500;color:var(--ink)}
+/* checkout */
+.sec{margin-bottom:30px}
+.sec-t{font-size:19px;font-weight:600;letter-spacing:-.025em;margin-bottom:14px;line-height:1.2}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav{width:40px;height:40px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-nav:hover:not(:disabled){background:var(--hover)}
+.cal-nav:disabled{opacity:.3;cursor:not-allowed}
+.cal-month{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:13px;font-weight:500;color:var(--muted);text-align:center;padding:4px 0}
+.cd{aspect-ratio:1;border-radius:var(--r-sm);font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;border:0;background:none;cursor:default;color:var(--faint);position:relative;font-variant-numeric:tabular-nums}
+.cd.av{background:var(--sunken);color:var(--ink);cursor:pointer;transition:background-color .15s}
+.cd.av:hover{background:var(--hover-2)}
+.cd.full{background:transparent;color:var(--muted);text-decoration:line-through;box-shadow:inset 0 0 0 1px var(--line-2)}
+.cd.sel{background:var(--fill);color:var(--on-fill)}
+.cd.today:not(.sel)::after{content:'';position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--accent-2)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px}
+.slot{min-height:50px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper);cursor:pointer;font-weight:500;font-size:15px;transition:background-color .15s,border-color .15s;font-variant-numeric:tabular-nums}
+.slot:hover:not(:disabled){border-color:var(--line-2);background:var(--hover)}
+.slot.sel{background:var(--fill);color:var(--on-fill);border-color:transparent}
+.slot:disabled{background:transparent;color:var(--muted);border-style:dashed;cursor:not-allowed;text-decoration:line-through}
+.slot small{font-weight:400}
+.sched{display:none;margin-top:12px;padding:12px 16px;border-radius:var(--r-md);background:var(--success-tint);color:var(--success);font-weight:500}
+.sched.show{display:block}
+.pm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pm button{min-height:72px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--sunken);cursor:pointer;font-size:16px;font-weight:600;letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:background-color .15s,border-color .15s,box-shadow .15s}
+.pm button:hover{border-color:var(--line-2)}
+.pm button small{font-weight:400;font-size:13px;color:var(--muted)}
+.pm button.sel{background:var(--paper);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+/* qr panel: 20px corner, 14px padding, so the QR's frame is 6px */
+.qr-box{display:none;margin-top:8px;background:var(--sunken);border-radius:var(--r-lg);padding:14px;gap:18px;align-items:center}
+.qr-box.show{display:flex}
+.qr{width:140px;height:140px;flex-shrink:0;border:8px solid #fff;border-radius:var(--r-xs);background:#fff}
+.proof{display:block;border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:14px;text-align:center;cursor:pointer;position:relative;background:var(--paper);font-size:15px;margin-top:12px;transition:border-color .2s,background-color .2s}
+.proof:hover{border-color:var(--ink)}
+.proof.has{border-style:solid;border-color:var(--success);background:var(--success-tint);color:var(--success)}
+.proof input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.proof img{max-height:90px;margin:0 auto 6px;border-radius:var(--r-xs)}
+.terms{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--ink-2);line-height:1.55}
+.terms input{width:19px;height:19px;margin-top:2px;flex-shrink:0}
+.terms a{color:var(--ink);font-weight:500}
+.co-sum{background:var(--sunken);border-radius:var(--r-md);padding:14px 16px;margin-bottom:18px;font-size:15px}
+.co-sum div{display:flex;justify-content:space-between;padding:3px 0;font-variant-numeric:tabular-nums}
+.success{padding:4px 0}
+.success h3{font-size:36px;font-weight:600;line-height:1;letter-spacing:-.045em}
+.success .ref{font-size:17px;margin:12px 0 14px}
+.success .ref b{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.success-box{background:var(--sunken);border-radius:var(--r-md);padding:4px 16px;margin:16px 0 20px;font-size:15px}
+.success-box div{display:flex;justify-content:space-between;gap:16px;padding:10px 0}
+.success-box div+div{border-top:1px solid var(--line)}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.summary{position:static}}
+@media (max-width:600px){
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .st{padding:8px 6px;font-size:13px}
+  .ci{grid-template-columns:64px minmax(0,1fr) 40px;row-gap:10px;padding:10px}
+  .ci-img{width:64px;height:64px}.ci-img .art{width:46px;height:46px}
+  .ci .qty-ctrl{grid-column:2;justify-self:start}.ci-total{grid-column:2/4;text-align:left}
+  .ci-rm{grid-row:1;grid-column:3}
+  .methods{grid-template-columns:1fr}
+  .slots{grid-template-columns:1fr 1fr}.pm{grid-template-columns:1fr}
+  .qr-box.show{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body data-page="cart">
+
+<header class="page-header"><div class="container">
+  <div>
+  <h1 class="page-title">My cart</h1><p class="page-sub" id="hdr-sub">0 items</p></div>
+  <a class="btn btn-outline" href="materials.html">Continue shopping</a>
+</div></header>
+
+<div class="container layout">
+  <div>
+    <div class="steps" aria-label="Checkout progress">
+      <div class="st on">Cart</div><div class="st" id="st-2">Delivery or pickup</div><div class="st" id="st-3">Payment</div><div class="st" id="st-4">Confirmation</div>
+    </div>
+    <section class="card" style="margin-bottom:4px" aria-labelledby="items-t">
+      <div class="card-head"><div><h2 class="card-title" id="items-t">What you're buying</h2><div class="hint" id="item-count" style="margin-top:4px">0 items</div></div><button class="btn btn-sm btn-danger" id="clear-all">Clear all</button></div>
+      <div id="cart-body"></div>
+    </section>
+    <section class="card" id="method-card" style="margin-bottom:4px" aria-labelledby="method-t"><div class="card-body">
+      <h2 class="sec-t" id="method-t">How do you want it?</h2>
+      <div class="methods" role="group" aria-label="Delivery method">
+        <button class="method" data-method="delivery" aria-pressed="true"><b>Deliver to me</b><span>₱149 within Caloocan and nearby, <em>free over ₱5,000</em>. Pick a date and two-hour window.</span></button>
+        <button class="method" data-method="pickup" aria-pressed="false"><b>Pick up at the store</b><span>Bagumbong, Caloocan, <em>always free</em>. We'll have it ready on the slot you choose.</span></button>
+      </div>
+    </div></section>
+    <section class="card" id="promo-card" aria-labelledby="promo-t"><div class="card-body">
+      <h2 class="sec-t" id="promo-t">Promo code</h2>
+      <div class="promo-row"><input class="input" id="promo" placeholder="VREYMAR10" maxlength="20" aria-label="Promo code" aria-describedby="promo-msg"/><button class="btn btn-primary" id="apply-promo">Apply</button></div>
+      <div class="promo-msg" id="promo-msg"></div>
+      <div class="hint" style="margin-top:8px">Try VREYMAR10, NEWCUST20 or FREESHIP.</div>
+    </div></section>
+  </div>
+
+  <aside class="card summary" aria-labelledby="sum-t">
+    <div class="card-body">
+      <h2 class="card-title" id="sum-t" style="font-size:34px;margin-bottom:16px">What you'll pay</h2>
+      <div class="free-bar" id="free-bar"></div>
+      <div class="sr"><span>Subtotal (<span id="s-count">0</span> items)</span><b id="s-sub">₱0.00</b></div>
+      <div class="sr" id="s-promo-row" style="display:none"><span>Promo <span id="s-promo-l"></span></span><b class="red" id="s-promo">-₱0.00</b></div>
+      <div class="sr"><span id="s-fee-l">Delivery</span><b id="s-fee">₱0.00</b></div>
+      <div class="sr"><span>VAT (12%)</span><b id="s-vat">₱0.00</b></div>
+      <div class="stotal"><span>Total</span><b id="s-total">₱0.00</b></div>
+      <button class="btn btn-accent btn-block" id="checkout" style="min-height:56px;font-size:18px">Proceed to checkout</button>
+      <a class="btn btn-outline btn-block" href="estimate.html" style="margin-top:8px">Estimate a project instead</a>
+      <p class="avail-note">If an item runs out before we prepare your order, we'll call you to choose: wait for restock, take a similar item, or get a refund for it. <a href="about.html#terms">Terms</a></p>
+    </div>
+  </aside>
+</div>
+
+<!-- CHECKOUT -->
+<div class="modal-overlay" id="co-modal" role="dialog" aria-modal="true" aria-labelledby="co-title" data-static="1">
+  <div class="modal" style="width:680px">
+    <div class="modal-head"><div><div class="modal-title" id="co-title">Checkout</div><div class="modal-sub" id="co-sub"></div></div><button class="modal-x" id="co-x" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div id="co-form">
+        <div class="alert error" id="co-alert" role="alert"></div>
+        <div class="sec"><h3 class="sec-t">Your details</h3>
+          <div class="grid-2">
+            <div class="field"><label class="label" for="co-name">Full name</label><input class="input" id="co-name" autocomplete="name"/></div>
+            <div class="field"><label class="label" for="co-phone">Mobile number</label><input class="input" id="co-phone" type="tel" placeholder="09XX XXX XXXX" autocomplete="tel"/></div>
+            <div class="field full"><label class="label" for="co-email">Email for your receipt</label><input class="input" id="co-email" type="email" autocomplete="email"/></div>
+          </div>
+          <div class="grid-2" id="addr-block">
+            <div class="field full"><label class="label" for="co-addr">Street address</label><input class="input" id="co-addr" placeholder="House no., street, barangay" autocomplete="street-address"/></div>
+            <div class="field"><label class="label" for="co-city">City or municipality</label><input class="input" id="co-city" placeholder="Caloocan City"/></div>
+            <div class="field"><label class="label" for="co-prov">Province</label><input class="input" id="co-prov" placeholder="Metro Manila"/></div>
+          </div>
+          <div class="field" style="margin:0"><label class="label" for="co-notes" id="co-notes-l">Notes for the rider (optional)</label><textarea class="textarea" id="co-notes" style="min-height:64px" placeholder="Landmarks, gate instructions…"></textarea></div>
+        </div>
+
+        <div class="sec"><h3 class="sec-t" id="sched-t">When should we deliver?</h3>
+          <div class="alert info" id="bulk-note"></div>
+          <div class="cal-head"><button class="cal-nav" id="cal-prev" aria-label="Previous month"><span class="chev" style="transform:rotate(90deg)"></span></button><div class="cal-month" id="cal-month"></div><button class="cal-nav" id="cal-next" aria-label="Next month"><span class="chev" style="transform:rotate(-90deg)"></span></button></div>
+          <div class="cal" id="cal"></div>
+          <div class="legend"><span><i style="background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line-2)"></i>Open</span><span><i style="box-shadow:inset 0 0 0 1px var(--line-2)"></i>Fully booked</span><span><i style="background:var(--fill)"></i>Your choice</span><span>Closed Sundays</span></div>
+          <div class="slots" id="slots" style="display:none"></div>
+          <div class="sched" id="sched"></div>
+        </div>
+
+        <div class="sec"><h3 class="sec-t">Payment</h3>
+          <div class="pm" id="pm">
+            <button class="sel" data-pm="cod"><span id="cod-l">Cash on delivery</span><small id="cod-s">Pay the rider</small></button>
+            <button data-pm="gcash">GCash<small>Scan, then upload proof</small></button>
+            <button data-pm="maya">Maya<small>Scan, then upload proof</small></button>
+          </div>
+          <div class="qr-box" id="qr-box">
+            <svg class="qr" id="qr" viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="Sample payment QR code"></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:20px;letter-spacing:-.02em" id="qr-title">Scan to pay with GCash</div>
+              <div style="margin:4px 0 2px;font-size:15px">Account name: <b>Vreymar Hardware</b> · Amount: <b id="qr-amt"></b></div>
+              <div class="hint" style="color:var(--warn)">Demo QR for this prototype. Replace with the store's real QR before going live.</div>
+              <label class="proof" id="proof"><input type="file" id="proof-in" accept="image/*" aria-describedby="proof-t"/><span id="proof-t">Upload your payment screenshot (required)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec" style="margin-bottom:4px">
+          <div class="co-sum" id="co-sum"></div>
+          <label class="terms"><input type="checkbox" id="co-terms"/><span>I agree to the <a href="about.html#terms" target="_blank">Terms & Conditions</a>, including what happens if an item becomes unavailable, and the <a href="about.html#policy" target="_blank">Return & Replacement Policy</a>.</span></label>
+        </div>
+      </div>
+      <div id="co-done" style="display:none"></div>
+    </div>
+    <div class="modal-foot" id="co-foot"><button class="btn btn-outline" id="co-cancel">Cancel</button><button class="btn btn-accent" id="place">Place order</button></div>
+  </div>
+</div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/photos.js"></script>
+<script src="assets/js/art.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+(function(){
+  const {Cart, Catalog, Orders, Auth, RULES, PROMOS, TIME_SLOTS, PAY_LABEL, peso, esc, fmtLongDate} = VH;
+  const $ = id => document.getElementById(id);
+  let promo = sessionStorage.getItem('vh_promo') || '';
+  let method = sessionStorage.getItem('vh_method') || 'delivery';
+  let pay = 'cod', proof = null, selDate = null, selSlot = null, calY, calM;
+  const pickup = () => method === 'pickup';
+  const totals = () => Cart.totals(promo, method);
+
+  /* render(false) refreshes counts and totals only; the item rows stay put, so a click on − / + is never lost */
+  function render(rows){
+    if(rows===false) return renderSummary();
+    const t = totals();
+    const n = t.lines.reduce((a,l)=>a+l.qty,0);
+    $('hdr-sub').textContent = n ? n+' item'+(n!==1?'s':'')+' ready to order' : 'Nothing here yet';
+    $('item-count').textContent = t.lines.length+' product'+(t.lines.length!==1?'s':'')+' · '+n+' units';
+    $('clear-all').style.display = t.lines.length?'':'none';
+    $('promo-card').style.display = $('method-card').style.display = t.lines.length?'':'none';
+    document.querySelectorAll('.method').forEach(b=>b.setAttribute('aria-pressed', b.dataset.method===method));
+    if(!t.lines.length){
+      $('cart-body').innerHTML = `<div class="empty" style="background:var(--paper)"><div class="empty-icon">${Art.cat(9)}</div><div class="empty-title">Your cart is empty</div><p style="margin-bottom:20px;font-size:17px">Browse the catalog, or let Estimate AI build your material list.</p><a class="btn btn-primary" href="materials.html">Shop materials</a> <a class="btn btn-outline" href="estimate.html">Get an estimate</a></div>`;
+    } else {
+      $('cart-body').innerHTML = t.lines.map(l=>`<div class="ci">
+          <div class="ci-img" data-tile="${UI.tileOf(l.catId)}">${Art.cat(l.catId)}</div>
+          <div><div class="ci-name">${esc(l.name)}</div><div class="ci-meta">${esc(l.sku)} · ${peso(l.price)} / ${esc(l.unit)}</div>
+            ${l.stock<=0?'<div class="ci-warn">Now out of stock. Please remove</div>':l.qty>=l.stock?`<div class="ci-warn" style="color:var(--warn)">That's all we have: ${l.stock}</div>`:''}</div>
+          <div class="qty-ctrl"><button class="qty-btn" data-q="${l.id}" data-d="-1" aria-label="Decrease">−</button><input class="qty-num" data-set="${l.id}" type="number" min="1" value="${l.qty}" aria-label="Quantity of ${esc(l.name)}"/><button class="qty-btn" data-q="${l.id}" data-d="1" aria-label="Increase">+</button></div>
+          <div class="ci-total" data-lt="${l.id}">${peso(l.line)}</div>
+          <button class="ci-rm" data-rm="${l.id}" aria-label="Remove ${esc(l.name)}">✕</button>
+        </div>`).join('');
+    }
+    renderSummary();
+  }
+  function renderSummary(){
+    const t = totals();
+    const n = t.lines.reduce((a,l)=>a+l.qty,0);
+    $('hdr-sub').textContent = n ? n+' item'+(n!==1?'s':'')+' ready to order' : 'Nothing here yet';
+    $('item-count').textContent = t.lines.length+' product'+(t.lines.length!==1?'s':'')+' · '+n+' units';
+    $('s-count').textContent = n;
+    $('s-sub').textContent = peso(t.subtotal);
+    $('s-promo-row').style.display = t.promo?'flex':'none';
+    $('s-promo-l').textContent = t.promo?'('+promo+')':'';
+    $('s-promo').textContent = '-'+peso(t.discount);
+    $('s-fee-l').textContent = pickup() ? 'Store pickup' : 'Delivery';
+    $('s-fee').innerHTML = !t.lines.length ? peso(0) : t.fee===0 ? '<span class="green">Free</span>' : peso(t.fee);
+    $('s-vat').textContent = peso(t.vat);
+    $('s-total').textContent = peso(t.total);
+    $('checkout').disabled = !t.lines.length;
+    const left = RULES.FREE_DELIVERY_MIN - t.subtotal;
+    $('free-bar').style.display = t.lines.length && !pickup() ? '' : 'none';
+    $('free-bar').innerHTML = left>0 ? `Add <b>${peso(left)}</b> more for free delivery.<div class="track"><div class="fill" style="width:${Math.min(100,t.subtotal/RULES.FREE_DELIVERY_MIN*100)}%"></div></div>` : 'Your order ships free.<div class="track"><div class="fill" style="width:100%"></div></div>';
+    if(promo) $('promo').value = promo;
+  }
+
+  document.querySelector('.methods').addEventListener('click', e=>{ const b=e.target.closest('[data-method]'); if(!b) return; method=b.dataset.method; sessionStorage.setItem('vh_method',method); render(); });
+  $('cart-body').addEventListener('click', e=>{
+    const q = e.target.closest('[data-q]');
+    if(q){ const id=+q.dataset.q; const it=Cart.items().find(c=>c.id===id); const p=Catalog.product(id); if(!it) return;
+      const inp=$('cart-body').querySelector(`[data-set="${id}"]`); const typed=Math.floor(+inp.value);
+      const nv = (typed>0 ? typed : it.qty) + (+q.dataset.d);
+      if(nv>p.stock){ UI.toast('Only '+p.stock+' '+p.unit+' available.','warn'); return; }
+      if(nv<1) return; Cart.set(id,nv); render(); UI.flash($('s-total').parentElement); return; }
+    const rm = e.target.closest('[data-rm]'); if(rm){ const row=rm.closest('.ci'); row.classList.add('row-out'); setTimeout(()=>{ Cart.remove(+rm.dataset.rm); render(); UI.flash($('s-total').parentElement); UI.toast('Item removed.'); }, 200); }
+  });
+  // typing and leaving the box update the line in place (no row rebuild)
+  function applyTyped(s, final){
+    const id=+s.dataset.set, p=Catalog.product(id), it=Cart.items().find(c=>c.id===id); if(!p||!it) return;
+    let v=Math.floor(+s.value);
+    if(!(v>0)){ if(final) s.value=it.qty; return; }
+    if(v>p.stock){ v=p.stock; if(final){ UI.toast('Only '+p.stock+' '+p.unit+' available.','warn'); s.value=v; } }
+    Cart.set(id,v);
+    const lt=$('cart-body').querySelector(`[data-lt="${id}"]`); if(lt) lt.textContent=peso(p.price*v);
+    render(false);
+  }
+  $('cart-body').addEventListener('input', e=>{ const s=e.target.closest('[data-set]'); if(s) applyTyped(s,false); });
+  $('cart-body').addEventListener('change', e=>{ const s=e.target.closest('[data-set]'); if(s){ applyTyped(s,true); UI.flash($('s-total').parentElement); } });
+  $('cart-body').addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.matches('[data-set]')) e.target.blur(); });
+  $('clear-all').onclick = ()=>{ if(confirm('Remove all items from your cart?')){ Cart.clear(); render(); } };
+  $('apply-promo').onclick = ()=>{
+    const code = $('promo').value.trim().toUpperCase(); const msg=$('promo-msg');
+    if(!code){ promo=''; sessionStorage.removeItem('vh_promo'); msg.textContent=''; render(); return; }
+    if(PROMOS[code]){ promo=code; sessionStorage.setItem('vh_promo',code); msg.textContent=PROMOS[code].label+' applied.'; msg.style.color='var(--success)'; }
+    else { promo=''; sessionStorage.removeItem('vh_promo'); msg.textContent='That code is invalid or expired.'; msg.style.color='var(--danger)'; }
+    render();
+  };
+  $('promo').addEventListener('keydown', e=>{ if(e.key==='Enter') $('apply-promo').click(); });
+
+  /* ---- checkout ---- */
+  const ymd = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  function leadDays(){ return totals().subtotal >= RULES.BULK_MIN ? RULES.BULK_LEAD_DAYS : 1; }
+  function earliest(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+leadDays()); return d; }
+  function steps(n){ ['st-2','st-3','st-4'].forEach((id,i)=>$(id).classList.toggle('on', i+2<=n)); }
+
+  $('checkout').onclick = ()=>{
+    const user = Auth.current();
+    if(!user){ UI.toast('Sign in to check out. Your cart will be waiting.','warn'); setTimeout(()=>location.href='login.html?next=cart.html',800); return; }
+    const t = totals();
+    const bad = t.lines.find(l=>l.qty>l.stock);
+    if(bad){ UI.toast(bad.name+' exceeds available stock ('+bad.stock+').','danger'); return; }
+    $('co-form').style.display='block'; $('co-done').style.display='none'; $('co-foot').style.display='flex';
+    $('co-title').textContent = pickup() ? 'Checkout · store pickup' : 'Checkout · delivery';
+    $('co-sub').textContent = pickup() ? 'Your details, pickup time and payment' : 'Your details, delivery slot and payment';
+    $('addr-block').style.display = pickup() ? 'none' : '';
+    $('co-notes-l').textContent = pickup() ? 'Notes for the counter (optional)' : 'Notes for the rider (optional)';
+    $('co-notes').placeholder = pickup() ? 'Who will pick it up, vehicle type…' : 'Landmarks, gate instructions…';
+    $('sched-t').textContent = pickup() ? 'When will you pick it up?' : 'When should we deliver?';
+    $('cod-l').textContent = pickup() ? 'Pay at pickup' : 'Cash on delivery';
+    $('cod-s').textContent = pickup() ? 'Cash at the counter' : 'Pay the rider';
+    $('co-name').value = Auth.fullName(user); $('co-phone').value = user.contact||''; $('co-email').value = user.email||'';
+    $('co-addr').value = user.address||''; $('co-city').value = user.city||''; $('co-prov').value = user.province||'';
+    $('co-alert').classList.remove('show'); $('co-terms').checked=false;
+    selDate=null; selSlot=null; $('slots').style.display='none'; $('sched').classList.remove('show');
+    const e = earliest(); calY=e.getFullYear(); calM=e.getMonth();
+    const lead = leadDays();
+    $('bulk-note').classList.toggle('show', lead>1);
+    $('bulk-note').textContent = lead>1 ? 'Bulk order of ₱'+RULES.BULK_MIN.toLocaleString()+' or more: choose a date at least '+lead+' days ahead so we can reserve your materials.' : '';
+    renderCal(); setPay('cod'); renderCoSum(); steps(2);
+    UI.openModal('co-modal');
+  };
+  function closeCo(){ UI.closeModal('co-modal'); steps(1); render(); }
+  $('co-x').onclick = closeCo; $('co-cancel').onclick = closeCo;
+
+  function renderCal(){
+    const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    $('cal-month').textContent = months[calM]+' '+calY;
+    const e = earliest(); const max = new Date(); max.setDate(max.getDate()+60);
+    $('cal-prev').disabled = new Date(calY,calM,1) <= new Date(e.getFullYear(),e.getMonth(),1);
+    $('cal-next').disabled = new Date(calY,calM+1,1) > max;
+    const today = new Date(); today.setHours(0,0,0,0);
+    let h = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+    const first = new Date(calY,calM,1).getDay(), days = new Date(calY,calM+1,0).getDate();
+    for(let i=0;i<first;i++) h+='<div></div>';
+    for(let d=1; d<=days; d++){
+      const dt = new Date(calY,calM,d); const key = ymd(dt);
+      const closed = dt.getDay()===0, early = dt < e, late = dt > max;
+      const full = !closed && !early && !late && !pickup() && Orders.isDateFull(key);
+      let cls='cd', title='';
+      if(closed){ title='Closed on Sundays'; } else if(early){ title= dt<today?'Past date':'Earliest date is '+VH.fmtDate(e); } else if(late){ title='Bookings open up to 60 days ahead'; }
+      else if(full){ cls+=' full'; title='Fully booked'; } else cls+=' av';
+      if(dt.getTime()===today.getTime()) cls+=' today';
+      if(selDate===key) cls+=' sel';
+      h+=`<button type="button" class="${cls}" ${cls.includes('av')?`data-date="${key}"`:'disabled'} title="${title}" aria-label="${fmtLongDate(dt)}${title?': '+title:''}"${selDate===key?' aria-pressed="true"':''}>${d}</button>`;
+    }
+    $('cal').innerHTML = h;
+  }
+  $('cal-prev').onclick=()=>{ calM--; if(calM<0){calM=11;calY--;} renderCal(); };
+  $('cal-next').onclick=()=>{ calM++; if(calM>11){calM=0;calY++;} renderCal(); };
+  $('cal').addEventListener('click', e=>{ const b=e.target.closest('[data-date]'); if(!b) return; selDate=b.dataset.date; selSlot=null; renderCal(); renderSlots(); updSched(); });
+  function renderSlots(){
+    $('slots').style.display='grid';
+    $('slots').innerHTML = TIME_SLOTS.map(s=>{ const full=!pickup() && Orders.isSlotFull(selDate,s); return `<button type="button" class="slot${selSlot===s?' sel':''}" data-slot="${s}" ${full?'disabled':''}>${s}${full?'<br><small>Fully booked</small>':''}</button>`; }).join('');
+  }
+  $('slots').addEventListener('click', e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; selSlot=b.dataset.slot; renderSlots(); updSched(); steps(3); });
+  function updSched(){ const el=$('sched'); if(selDate&&selSlot){ el.textContent=(pickup()?'Pickup: ':'Delivery: ')+fmtLongDate(selDate+'T00:00:00')+' · '+selSlot; el.classList.add('show'); } else el.classList.remove('show'); }
+
+  function setPay(m){
+    pay=m; proof=null;
+    document.querySelectorAll('#pm button').forEach(b=>b.classList.toggle('sel',b.dataset.pm===m));
+    $('qr-box').classList.toggle('show', m!=='cod');
+    $('proof').classList.remove('has'); $('proof-t').textContent='Upload your payment screenshot (required)'; $('proof-in').value='';
+    if(m!=='cod'){ $('qr-title').textContent='Scan to pay with '+PAY_LABEL[m]; $('qr-amt').textContent=peso(totals().total); drawQR(m); }
+  }
+  $('pm').addEventListener('click', e=>{ const b=e.target.closest('[data-pm]'); if(b) setPay(b.dataset.pm); });
+  function drawQR(seedStr){
+    let s=0; for(const ch of seedStr+'VREYMAR') s=(s*31+ch.charCodeAt(0))>>>0;
+    const rnd=()=>(s=(s*1103515245+12345)>>>0)/4294967296;
+    const N=29; let r='<rect width="29" height="29" fill="#fff"/>';
+    const finder=(x,y)=>`<rect x="${x}" y="${y}" width="7" height="7" fill="#111"/><rect x="${x+1}" y="${y+1}" width="5" height="5" fill="#fff"/><rect x="${x+2}" y="${y+2}" width="3" height="3" fill="#111"/>`;
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const inF=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20); if(!inF && rnd()>.52) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#111"/>`; }
+    $('qr').innerHTML = r+finder(0,0)+finder(22,0)+finder(0,22)+`<rect x="11" y="11" width="7" height="7" fill="#fff"/><text x="14.5" y="16.3" font-size="4.6" text-anchor="middle" font-family="Arial" font-weight="900" fill="${seedStr==='gcash'?'#007DFE':'#0B8F4C'}">${seedStr==='gcash'?'G':'M'}</text>`;
+  }
+  $('proof-in').onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    if(!f.type.startsWith('image/')){ UI.toast('Please upload an image file.','danger'); return; }
+    const img = new Image(); const url = URL.createObjectURL(f);
+    img.onload = ()=>{
+      const sc = Math.min(1, 800/Math.max(img.width,img.height));
+      const c = document.createElement('canvas'); c.width=img.width*sc; c.height=img.height*sc;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      proof = {name:f.name, data:c.toDataURL('image/jpeg',.7)};
+      $('proof').classList.add('has'); $('proof-t').innerHTML=`<img src="${proof.data}" alt="Your payment screenshot"/>${esc(f.name)} (tap to replace)`;
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = ()=>UI.toast('Could not read that image.','danger');
+    img.src = url;
+  };
+  function renderCoSum(){
+    const t = totals();
+    $('co-sum').innerHTML = `<div><span>${t.lines.length} products</span><b>${peso(t.subtotal)}</b></div>`+
+      (t.discount?`<div><span>Promo ${esc(promo)}</span><b style="color:var(--danger)">-${peso(t.discount)}</b></div>`:'')+
+      `<div><span>${pickup()?'Store pickup':'Delivery'}</span><b>${t.fee?peso(t.fee):'Free'}</b></div><div><span>VAT (12%)</span><b>${peso(t.vat)}</b></div>`+
+      `<div style="margin-top:6px"><b>Total to pay</b><b style="font-family:var(--font-head);font-size:28px">${peso(t.total)}</b></div>`;
+  }
+
+  $('place').onclick = e=>UI.busy(e.currentTarget, placeOrder, 600);
+  function placeOrder(){
+    const al = $('co-alert'); const fail = (m,el)=>{ al.textContent=m; al.classList.add('show'); if(el){ el.classList.add('error'); el.focus(); } else al.scrollIntoView({behavior:'smooth',block:'center'}); };
+    al.classList.remove('show');
+    const name=$('co-name').value.trim(), phone=$('co-phone').value.replace(/[\s-]/g,''), email=$('co-email').value.trim(), addr=$('co-addr').value.trim(), city=$('co-city').value.trim(), prov=$('co-prov').value.trim();
+    document.querySelectorAll('#co-form .input').forEach(i=>i.classList.remove('error'));
+    if(!name) return fail('Please enter your full name.', $('co-name'));
+    if(!/^(09|\+639)\d{9}$/.test(phone)) return fail('Enter a valid PH mobile number (09XXXXXXXXX).', $('co-phone'));
+    if(!/^\S+@\S+\.\S+$/.test(email)) return fail('Enter an email so we can send your receipt.', $('co-email'));
+    if(!pickup() && !addr) return fail('Enter your street address.', $('co-addr'));
+    if(!pickup() && !city) return fail('Enter your city or municipality.', $('co-city'));
+    if(!selDate) return fail('Choose a date on the calendar.');
+    if(!selSlot) return fail('Choose a time window.');
+    if(pay!=='cod' && !proof) return fail('Upload your '+PAY_LABEL[pay]+' payment screenshot.');
+    if(!$('co-terms').checked) return fail('Please agree to the Terms & Conditions and the Return & Replacement Policy.');
+    const user = Auth.current();
+    const r = Orders.place({ name, phone, email, method, address:[addr,city,prov].filter(Boolean).join(', '), notes:$('co-notes').value.trim(),
+      pay: pay==='cod' && pickup() ? 'cop' : pay, proof, promoCode:promo, schedule:{date:selDate, slot:selSlot} });
+    if(!r.ok) return fail(r.msg);
+    if(!pickup() && !user.address) Auth.update(user.id,{address:addr,city,province:prov});
+    sessionStorage.removeItem('vh_promo'); promo='';
+    const o = r.order;
+    $('co-form').style.display='none'; $('co-foot').style.display='none'; $('co-done').style.display='block';
+    $('co-title').textContent='Order placed'; $('co-sub').textContent='We\'ll confirm it shortly'; steps(4);
+    $('co-done').innerHTML = `<div class="success"><h3>Thank you, ${esc(name.split(' ')[0])}.</h3>
+      <div class="ref">Order reference <b>${o.ref}</b></div>
+      <p style="font-size:17px;max-width:520px">Your order is pending confirmation. ${o.pay==='cod'?'Please prepare the exact amount for the rider.':o.pay==='cop'?'Pay at the counter when you pick up.':'Our staff will check your payment screenshot.'} Track every step in My orders.</p>
+      <div class="success-box">
+        <div><span>${pickup()?'Pickup':'Delivery'}</span><b>${fmtLongDate(selDate+'T00:00:00')} · ${selSlot}</b></div>
+        <div><span>${pickup()?'Where':'Address'}</span><b style="text-align:right">${esc(o.address)}</b></div>
+        <div><span>Payment</span><b>${PAY_LABEL[o.pay]}</b></div>
+        <div><span>Total</span><b style="font-family:var(--font-head);font-size:26px">${peso(o.total)}</b></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="account.html#orders">Track my order</a><a class="btn btn-outline" href="materials.html">Keep shopping</a></div></div>`;
+    render();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

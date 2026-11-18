@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Estimate AI | Vreymar Hardware</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/site.css"/>
+<style>
+/* ── INPUT: the method on a dark inset panel, the form on the ground ── */
+.est{margin-top:var(--nav-h);display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:12px;padding:12px;min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h))}
+.est-left{position:sticky;top:calc(var(--nav-h) + 12px);align-self:start;min-height:calc(100dvh - var(--nav-h) - 24px);background:var(--field);color:#fff;border-radius:var(--r-xl);padding:clamp(32px,4vw,56px);display:flex;flex-direction:column;justify-content:center}
+.est-eyebrow,.est-bar{display:none}
+.est-title{font-size:clamp(44px,5vw,80px);font-weight:600;color:#fff;line-height:.95;letter-spacing:-.055em;margin-bottom:22px}
+.est-title span{color:var(--accent)}
+.est-desc{font-size:17px;color:oklch(100% 0 0 / .78);line-height:1.6;max-width:440px;margin-bottom:28px}
+/* note: 20px tile inside the 28px panel */
+.est-note{background:var(--field-2);border:1px solid var(--line-on-field);border-radius:var(--r-lg);padding:18px 20px;max-width:440px}
+.est-note b{display:block;font-size:16px;font-weight:600;color:#fff;margin-bottom:6px}
+.est-note p{font-size:14px;color:oklch(100% 0 0 / .76);line-height:1.6}
+.wiz-steps{list-style:none;margin-top:16px;display:grid;gap:6px;max-width:440px}
+.wiz-steps li{display:grid;grid-template-columns:28px 1fr;column-gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r-md);color:oklch(100% 0 0 / .62);counter-increment:ws;transition:background-color .3s var(--ease)}
+.wiz-steps li::before{content:counter(ws);grid-row:span 2;width:28px;height:28px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;background:var(--field-3);color:oklch(100% 0 0 / .8)}
+.wiz-steps li b{display:block;font-size:16px;font-weight:600;color:#fff;line-height:1.2}
+.wiz-steps li span{font-size:14px}
+.wiz-steps li.on{background:var(--field-2)}
+.wiz-steps li.on::before{background:var(--accent);color:var(--on-accent)}
+.wiz-steps li.done::before{content:'';background:var(--success) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/16px no-repeat}
+.wiz-steps{counter-reset:ws}
+.est-right{padding:clamp(32px,4vw,56px) clamp(16px,3vw,48px);display:flex;flex-direction:column;justify-content:center;max-width:760px}
+.form-title{font-size:clamp(28px,2.6vw,38px);font-weight:600;letter-spacing:-.045em;line-height:1.05;color:var(--ink);margin-bottom:8px}
+.form-sub{font-size:16px;color:var(--ink-2);margin-bottom:30px}
+.fg{margin-bottom:28px}
+.fl{display:block;font-size:17px;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin-bottom:6px}
+.fsub{font-size:14px;color:var(--muted);margin-bottom:10px}
+.opt{font-size:13px;font-weight:400;letter-spacing:0;color:var(--muted);margin-left:6px}
+.prompt{min-height:104px;resize:none}
+.suggest{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.suggest button{height:34px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;transition:background-color .15s,color .15s,border-color .15s}
+.suggest button:hover{background:var(--fill);color:var(--on-fill);border-color:transparent}
+.detected{font-size:14px;color:var(--muted);margin-top:10px;min-height:20px}
+.detected b{color:var(--ink);font-weight:600}
+/* area field: 14px outer, 4px inset, so the unit chip is 10px */
+.sqm{display:flex;align-items:center;max-width:240px;padding:4px;border-radius:var(--r-md);background:var(--sunken);border:1px solid var(--line);transition:border-color .2s,box-shadow .2s}
+.sqm:focus-within{border-color:var(--ink);box-shadow:0 0 0 4px var(--line)}
+.sqm input{flex:1;min-width:0;padding:6px 12px;border:0;background:transparent;font-size:26px;font-weight:600;letter-spacing:-.04em;color:var(--ink);outline:none;font-variant-numeric:tabular-nums}
+.sqm span{padding:0 14px;height:40px;display:flex;align-items:center;border-radius:var(--r-sm);background:var(--paper);font-size:14px;font-weight:500;color:var(--muted)}
+.budget{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bud{border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 16px 18px;cursor:pointer;background:var(--sunken);text-align:left;font-family:inherit;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.bud:hover{border-color:var(--line-2)}
+.bud.on{background:var(--paper);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.bud .dot{display:block;width:8px;height:8px;border-radius:50%;background:var(--hover-2);margin-bottom:12px;transition:background-color .2s}
+.bud.on .dot{background:var(--accent-2)}
+.bud .tier{font-size:13px;font-weight:500;color:var(--muted)}
+.bud .nm{font-size:19px;font-weight:600;letter-spacing:-.025em;color:var(--ink);margin:2px 0 4px}
+.bud .ds{font-size:13px;color:var(--muted);line-height:1.45}
+.back-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px 0 8px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);font-weight:500;font-size:14px;cursor:pointer;margin-bottom:20px;color:var(--ink);transition:background-color .15s}
+.back-btn:hover{background:var(--hover)}
+.upload{display:block;border:1.5px dashed var(--line-2);border-radius:var(--r-lg);padding:26px 16px;text-align:center;cursor:pointer;background:var(--paper);position:relative;transition:border-color .2s,background-color .2s}
+.upload:hover,.upload.drag{border-color:var(--ink);background:var(--sunken)}
+.upload.has{border-style:solid;border-color:var(--success);background:var(--success-tint)}
+.upload.err{border-color:var(--danger);background:var(--danger-tint)}
+.upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload b{font-size:15px;font-weight:600;color:var(--ink);display:block;margin-bottom:3px}
+.upload span{font-size:13px;color:var(--muted)}
+.upload img{max-height:140px;margin:0 auto 12px;border-radius:var(--r-sm)}
+.field-err{font-size:14px;font-weight:500;color:var(--danger);margin-top:6px;min-height:1px}
+.select.err,.input.err{border-color:var(--danger);background:var(--danger-tint)}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ck{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer;background:var(--sunken);font-size:15px;font-weight:400;transition:border-color .15s,background-color .15s}
+.ck:hover{border-color:var(--line-2)}
+.ck input{width:17px;height:17px}
+.ck:has(input:checked){border-color:var(--ink);background:var(--paper)}
+.checks.err .ck{background:var(--danger-tint)}
+.prefs summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.prefs summary::-webkit-details-marker{display:none}
+.prefs summary::before{content:'+';width:24px;height:24px;border-radius:var(--r-pill);background:var(--sunken);display:inline-flex;align-items:center;justify-content:center;font-weight:500;transition:transform .25s var(--ease)}
+.prefs[open] summary::before{transform:rotate(45deg)}
+.missing{background:var(--warn-tint);border-radius:var(--r-md);padding:14px 16px;margin:6px 0 14px;font-size:15px;line-height:1.5}
+.missing:empty{display:none}
+.missing b{display:block;margin-bottom:2px;font-weight:600}
+#generate:disabled{opacity:1;background:var(--hover-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
+
+/* ── LOADING ── */
+#loading{display:none;margin-top:var(--nav-h);min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center}
+.ld-title{font-size:34px;font-weight:600;letter-spacing:-.045em;color:var(--ink)}
+.ld-sub{font-size:15px;color:var(--muted);margin:8px 0 28px}
+.ld-bar{width:360px;max-width:100%;height:6px;background:var(--hover-2);border-radius:var(--r-pill);overflow:hidden;margin-bottom:26px}
+.ld-fill{height:100%;width:0;background:var(--accent-grad);border-radius:var(--r-pill);transition:width .45s var(--ease)}
+.ld-steps{display:flex;flex-direction:column;gap:6px;width:360px;max-width:100%;text-align:left}
+.ld-step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted);padding:11px 14px;border-radius:var(--r-md);background:var(--paper);border:1px solid var(--line);animation:toastIn .4s var(--ease-out)}
+.ld-step i{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-2);flex-shrink:0}
+.ld-step.done{color:var(--ink)}
+.ld-step.done i{border-color:transparent;background:var(--success) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/13px no-repeat}
+
+/* ── RESULTS ── */
+#results{display:none}
+.res-head{margin:calc(var(--nav-h) + 12px) 12px 0;background:var(--field);border-radius:var(--r-xl);padding:clamp(36px,4vw,56px) 0}
+#crumb-back{display:inline-flex!important;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:var(--r-pill);background:var(--field-2);color:#fff!important;font-weight:500!important;font-size:14px;margin-bottom:22px!important}
+.res-title{font-size:clamp(40px,5vw,76px);font-weight:600;color:#fff;margin-bottom:16px;line-height:1;letter-spacing:-.05em}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:13px;font-weight:500;height:30px;display:inline-flex;align-items:center;padding:0 12px;border-radius:var(--r-pill);background:var(--field-2);color:oklch(100% 0 0 / .82)}
+.tag:empty{display:none}
+.tag.acc{background:var(--accent);color:var(--on-accent)}
+.res-prompt{font-size:17px;color:oklch(100% 0 0 / .8);margin-top:16px;max-width:720px}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0 20px}
+.sc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px}
+.sc:last-child{background:var(--accent-grad);border-color:transparent;color:var(--on-accent)}
+.sc:last-child .sc-l,.sc:last-child .sc-s,.sc:last-child .sc-v{color:var(--on-accent)}
+.sc-l{font-size:14px;font-weight:500;color:var(--ink-2)}
+.sc-v{font-size:32px;font-weight:600;letter-spacing:-.05em;color:var(--ink);margin-top:8px;font-variant-numeric:tabular-nums}
+.sc-s{font-size:13px;color:var(--muted)}
+.res-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start;padding-bottom:56px}
+.sect{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:8px}
+.sect-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:transparent;cursor:pointer;user-select:none;width:100%;border:none;text-align:left;color:var(--ink);transition:background-color .15s}
+.sect-head:hover{background:var(--sunken)}
+.sect-head .t{font-size:18px;font-weight:600;letter-spacing:-.02em;flex:1}
+.sect-head .c{font-size:13px;color:var(--muted)}
+.sect-head .v{font-size:18px;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.sect.closed .sect-head .chev{transform:rotate(-90deg)}
+.sect.closed .sect-body{display:none}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr) auto auto;align-items:center;gap:16px;padding:10px 18px 10px 10px;border-top:1px solid var(--line)}
+.row-ic{width:56px;height:56px;border-radius:var(--r-md);background:var(--tile);display:flex;align-items:center;justify-content:center}
+.row-ic .art{width:42px;height:42px}
+.row-name{font-size:15px;font-weight:500;line-height:1.3}
+.row-meta{font-size:13px;color:var(--muted);margin-top:2px}
+.row-note{font-size:13px;color:var(--accent-dark);margin-top:2px}
+.row-warn{font-size:13px;color:var(--danger);font-weight:500;margin-top:2px}
+.row .qty-btn{width:30px;min-height:30px;border-radius:9px}
+.row .qty-num{width:44px;height:30px;font-size:14px;border-radius:9px}
+.row-total{text-align:right;min-width:100px}
+.row-total b{font-size:17px;font-weight:600;letter-spacing:-.02em;color:var(--ink);display:block}
+.row-total button{margin-top:6px;font-size:13px;font-weight:500;color:var(--ink);background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-pill);padding:4px 10px;cursor:pointer;transition:background-color .15s}
+.row-total button:hover{background:var(--hover)}
+.row-total button.ok{color:var(--success);background:var(--success-tint);border-color:transparent}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden;position:sticky;top:calc(var(--nav-h) + 16px)}
+.panel-h{padding:20px 22px 6px;font-size:20px;font-weight:600;letter-spacing:-.03em;color:var(--ink)}
+.panel-b{padding:10px 22px 22px}
+.pr{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}
+.pr span:first-child{color:var(--muted)}
+.pr b{font-weight:500;font-variant-numeric:tabular-nums}
+.pdiv{border:none;border-top:1px solid var(--line);margin:8px 0}
+.ptotal{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 14px}
+.ptotal span{font-size:16px;font-weight:600}
+.ptotal b{font-size:32px;font-weight:600;letter-spacing:-.05em;color:var(--ink)}
+.pnote{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.notes{background:var(--warn-tint);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:8px;font-size:14px;color:var(--ink)}
+.notes li{margin-left:16px;margin-top:3px}
+.foot{margin:0 12px 12px;background:var(--field);border-radius:var(--r-xl);padding:clamp(28px,3vw,44px) 0}
+.foot .container{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.foot-l .k,.foot-r .k{font-size:14px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;color:oklch(100% 0 0 / .7)!important;font-family:var(--font-body)!important}
+.foot-l .p{font-size:22px;font-weight:600;letter-spacing:-.025em;color:#fff;margin-top:4px}
+.foot-r{text-align:right}
+.foot-r .v{font-size:clamp(44px,5vw,72px);font-weight:600;letter-spacing:-.055em;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+.foot-r .n{font-size:13px;color:oklch(100% 0 0 / .7);margin-top:6px}
+.foot .btn-outline{color:#fff;box-shadow:inset 0 0 0 1px oklch(100% 0 0 / .25)}
+.foot .btn-outline:hover{background:oklch(100% 0 0 / .08)}
+/* spec modal */
+.ms{margin-bottom:22px}
+.ms-l{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.ms-s{font-size:14px;color:var(--muted);margin-bottom:12px}
+/* blueprint: the drafting grid lives where the plan is asked for, strongest in the far corner
+   and fading out before it reaches the text */
+.est-left,.res-head{isolation:isolate;overflow:hidden}
+.res-head{position:relative}
+.est-left::before,.res-head::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;--bp-line:oklch(100% 0 0 / .05);--bp-line-2:oklch(100% 0 0 / .1);
+  background-image:linear-gradient(var(--bp-line-2) 1px,transparent 1px),linear-gradient(90deg,var(--bp-line-2) 1px,transparent 1px),linear-gradient(var(--bp-line) 1px,transparent 1px),linear-gradient(90deg,var(--bp-line) 1px,transparent 1px);
+  background-size:80px 80px,80px 80px,16px 16px,16px 16px;background-position:-1px -1px;
+  -webkit-mask-image:radial-gradient(ellipse 75% 70% at 100% 0%,#000 10%,transparent 75%);mask-image:radial-gradient(ellipse 75% 70% at 100% 0%,#000 10%,transparent 75%)}
+.res-head::before{-webkit-mask-image:radial-gradient(ellipse 55% 120% at 100% 50%,#000 5%,transparent 80%);mask-image:radial-gradient(ellipse 55% 120% at 100% 50%,#000 5%,transparent 80%)}
+/* the upload box is a sheet of drafting paper waiting for the plan */
+html .upload{background-image:linear-gradient(var(--bp-line) 1px,transparent 1px),linear-gradient(90deg,var(--bp-line) 1px,transparent 1px);background-size:16px 16px;background-position:center}
+@media print{.est-left::before,.res-head::before{display:none}}
+@media print{.nav,.nav-drawer,.footer,.foot .btn,.panel button,.row-total button,.qty-btn,.toast-wrap{display:none!important}.res-head,.foot{background:#fff!important;margin:0}.res-title,.foot-r .v,.foot-l .p{color:#000!important}.res-layout{grid-template-columns:1fr}.panel{position:static}}
+@media (max-width:1000px){
+  .est{grid-template-columns:1fr;padding:8px}
+  .est-left{position:static;min-height:0;border-radius:var(--r-lg);padding:32px 22px}
+  .wiz-steps{display:none}
+  .est-right{padding:32px 8px;max-width:none}
+  .res-layout{grid-template-columns:1fr}
+  .panel{position:static}
+  .strip{grid-template-columns:1fr 1fr}
+  .res-head,.foot{margin-left:8px;margin-right:8px;border-radius:var(--r-lg)}
+}
+@media (max-width:560px){
+  .budget{grid-template-columns:1fr}
+  .row{grid-template-columns:48px minmax(0,1fr);row-gap:8px}
+  .row-ic{width:48px;height:48px}
+  .row .qty-ctrl{grid-column:2;justify-self:start}
+  .row-total{grid-column:2;text-align:left;display:flex;align-items:center;gap:10px}
+  .checks{grid-template-columns:1fr}
+  .foot-r{text-align:left}
+}
+</style>
+</head>
+<body data-page="estimate">
+
+<!-- INPUT -->
+<section class="est" id="input">
+  <div class="est-left">
+    <div class="est-eyebrow">AI-Assisted Estimation</div>
+    <h1 class="est-title">Estimate <span>AI</span></h1>
+    <div class="est-bar"></div>
+    <p class="est-desc">Describe your project, enter the area, and pick a budget range. Estimate AI lists the materials you need with quantities and current Vreymar prices, ready to add to your cart.</p>
+    <div class="est-note"><b>Why we ask for your plan</b><p>A floor plan tells us how many walls, doors and fixtures your project really has, so quantities are counted instead of guessed. Our staff also check your plan against the list before your order is prepared.</p></div>
+    <ol class="wiz-steps" aria-label="Estimate steps">
+      <li id="ws-1" class="on"><b>Your project</b><span>What, how big, what budget</span></li>
+      <li id="ws-2"><b>Plan and site details</b><span>Blueprint, site and scope</span></li>
+      <li id="ws-3"><b>Your material list</b><span>Priced from our shelves</span></li>
+    </ol>
+  </div>
+
+  <div class="est-right">
+  <div id="step-1">
+    <div class="form-title">Tell us about your project</div>
+    <div class="form-sub">Next, you'll upload your plan and site details, both are required for an accurate list.</div>
+    <div class="fg">
+      <label class="fl" for="prompt">What do you want to build?</label>
+      <div class="fsub">Describe your project in plain language (English or Taglish is fine).</div>
+      <textarea class="textarea prompt" id="prompt" placeholder="e.g. Build a restroom with a toilet bowl, shower head, and lavatory sink."></textarea>
+      <div class="suggest" id="suggest">
+        <button data-q="Build a restroom with a toilet bowl, shower head, and lavatory sink" data-a="3">Restroom</button>
+        <button data-q="Add a new bedroom with gypsum ceiling, lights, and outlets" data-a="12">Bedroom</button>
+        <button data-q="Renovate kitchen with stainless sink, backsplash tiles, and outlets" data-a="8">Kitchen</button>
+        <button data-q="Build a perimeter fence using 6 inch hollow blocks" data-a="40">Fence</button>
+        <button data-q="Replace roof with new roofing sheets and purlins" data-a="50">Roofing</button>
+        <button data-q="Retile the living room floor" data-a="20">Floor tiling</button>
+        <button data-q="Repaint bedroom walls" data-a="12">Repaint</button>
+      </div>
+      <div class="detected" id="detected"></div>
+    </div>
+    <div class="fg">
+      <label class="fl" for="sqm" id="area-label">Total floor area</label>
+      <div class="sqm"><input id="sqm" type="number" value="3" min="0.5" step="0.5"/><span>sqm</span></div>
+      <div class="hint" id="area-hint" style="margin-top:8px">Example: a 2m × 1.5m restroom = 3 sqm</div>
+    </div>
+    <div class="fg">
+      <span class="fl">Budget range</span>
+      <div class="fsub">Estimates prioritize materials within the selected range.</div>
+      <div class="budget" id="budget">
+        <button class="bud" data-b="eco"><span class="dot"></span><div class="tier">Economy</div><div class="nm">Basic</div><div class="ds">Local brands, functional finish</div></button>
+        <button class="bud on" data-b="mid"><span class="dot"></span><div class="tier">Mid-range</div><div class="nm">Standard</div><div class="ds">Quality brands, clean finish</div></button>
+        <button class="bud" data-b="pre"><span class="dot"></span><div class="tier">Premium</div><div class="nm">High-end</div><div class="ds">Top fixtures, porcelain & LED</div></button>
+      </div>
+    </div>
+    <button class="btn btn-accent btn-block" id="to-step-2" style="min-height:58px;font-size:18px">Continue to plan and site details</button>
+  </div>
+
+  <div id="step-2" hidden>
+    <button class="back-btn" id="back-1" type="button"><span class="chev" style="transform:rotate(90deg)"></span>Back to your project</button>
+    <div class="form-title">Upload your plan and site details</div>
+    <div class="form-sub" id="s2-sub">Everything on this step is required unless marked optional.</div>
+
+    <div class="fg">
+      <span class="fl" id="bp-l">Floor plan or blueprint</span>
+      <div class="fsub" id="bp-h">A photo of a hand sketch is fine. JPG, PNG, PDF, DWG or SVG, up to 20 MB.</div>
+      <label class="upload" id="up" aria-labelledby="bp-l" aria-describedby="bp-h"><input type="file" id="bp" accept=".jpg,.jpeg,.png,.pdf,.dwg,.svg" required/>
+        <img id="up-prev" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" hidden/><b id="up-t">Click to upload or drag your plan here</b><span id="up-s">Required</span></label>
+      <div class="field-err" id="e-bp"></div>
+    </div>
+
+    <div class="fg">
+      <span class="fl">Project type and scope</span>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="sp-ctype">Construction type</label><select class="select" id="sp-ctype" required><option value="">Choose one</option><optgroup label="Residential"><option>New Construction</option><option>Room Addition / Extension</option><option>Renovation / Remodeling</option><option>Repair / Patching</option></optgroup><optgroup label="Structural / Civil"><option>Perimeter Fence / Wall</option><option>Roof Replacement</option><option>Flooring Installation Only</option></optgroup></select></div>
+        <div class="field"><label class="label" for="sp-room">Room or area</label><select class="select" id="sp-room" required><option value="">Choose one</option><option>Restroom / Bathroom</option><option>Bedroom</option><option>Kitchen</option><option>Living Room</option><option>Garage / Carport</option><option>Outdoor / Perimeter</option><option>Roof</option><option>Other</option></select></div>
+        <div class="field full"><label class="label" for="sp-name">Project name <span class="opt">optional</span></label><input class="input" id="sp-name" placeholder="Ground floor restroom renovation"/></div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <span class="fl">Site</span>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="sp-floor">Floor level</label><select class="select" id="sp-floor" required><option value="">Choose one</option><option>Ground Floor</option><option>2nd Floor</option><option>3rd Floor</option><option>4th Floor and above</option></select></div>
+        <div class="field"><label class="label" for="sp-access">Truck access to the site</label><select class="select" id="sp-access" required><option value="">Choose one</option><option>Easily accessible</option><option>Narrow access road</option><option>Limited truck access</option></select></div>
+        <div class="field"><label class="label" for="sp-soil">Soil condition</label><select class="select" id="sp-soil" required><option value="">Choose one</option><option>Normal / Stable</option><option>Soft / Sandy</option><option>Rocky</option><option>Filled / Reclaimed</option><option>Not sure</option></select></div>
+        <div class="field"><label class="label" for="sp-city">City or municipality</label><input class="input" id="sp-city" placeholder="Caloocan City" required/></div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <span class="fl">What should the list cover?</span>
+      <div class="fsub">Choose at least one. We pre-selected what this kind of project usually needs.</div>
+      <div class="checks" id="sp-inc">
+        <label class="ck"><input type="checkbox" value="plumbing"/> Plumbing and fixtures</label>
+        <label class="ck"><input type="checkbox" value="electrical"/> Electrical wiring and outlets</label>
+        <label class="ck"><input type="checkbox" value="waterproofing"/> Waterproofing</label>
+        <label class="ck"><input type="checkbox" value="door"/> Door and hardware</label>
+        <label class="ck"><input type="checkbox" value="ceiling"/> Ceiling</label>
+        <label class="ck"><input type="checkbox" value="exhaust"/> Exhaust fan</label>
+        <label class="ck"><input type="checkbox" value="paint"/> Paint and finishing</label>
+        <label class="ck"><input type="checkbox" value="heater"/> Water heater</label>
+      </div>
+    </div>
+
+    <details class="fg prefs">
+      <summary class="fl">Material preferences <span class="opt">optional</span></summary>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="field"><label class="label" for="sp-tile">Floor tile</label><select class="select" id="sp-tile"><option value="">Follow my budget</option><option>Standard Ceramic (Economy)</option><option>Porcelain (Mid-range / Premium)</option></select></div>
+        <div class="field"><label class="label" for="sp-fix">Plumbing fixtures</label><select class="select" id="sp-fix"><option value="">Follow my budget</option><option>Economy (local brands)</option><option>Premium (American Standard)</option></select></div>
+        <div class="field full"><label class="label" for="sp-notes">Notes for our staff</label><textarea class="textarea" id="sp-notes" placeholder="Special requirements, design preferences, constraints…"></textarea></div>
+      </div>
+    </details>
+
+    <div class="missing" id="missing" aria-live="polite"></div>
+    <button class="btn btn-accent btn-block" id="generate" style="min-height:58px;font-size:18px">Generate my material list</button>
+  </div>
+  </div>
+</section>
+
+<!-- LOADING -->
+<section id="loading" aria-live="polite">
+  <div class="ld-title">Generating estimate</div>
+  <div class="ld-sub">Calculating materials and current prices for your project.</div>
+  <div class="ld-bar"><div class="ld-fill" id="ld-fill"></div></div>
+  <div class="ld-steps" id="ld-steps"></div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="res-head"><div class="container">
+    <a href="#" id="crumb-back">← Change plan or site details</a>
+    <div class="res-title" id="r-title">Estimate</div>
+    <div class="tags"><span class="tag" id="r-area"></span><span class="tag" id="r-budget"></span><span class="tag" id="r-plan"></span><span class="tag" id="r-site"></span></div>
+    <div class="res-prompt" id="r-prompt"></div>
+  </div></div>
+  <div class="container">
+    <div class="strip">
+      <div class="sc"><div class="sc-l">Materials</div><div class="sc-v" id="s-mat">₱0</div><div class="sc-s" id="s-lines">0 line items</div></div>
+      <div class="sc"><div class="sc-l">Labor (est.)</div><div class="sc-v" id="s-lab">₱0</div><div class="sc-s" id="s-labpct">20% of materials</div></div>
+      <div class="sc"><div class="sc-l">Contingency</div><div class="sc-v" id="s-con">₱0</div><div class="sc-s">10% buffer</div></div>
+      <div class="sc"><div class="sc-l">Project total</div><div class="sc-v" id="s-tot">₱0</div><div class="sc-s">materials + labor + contingency</div></div>
+    </div>
+    <div class="res-layout">
+      <div><div id="notes"></div><div id="sections"></div></div>
+      <aside class="panel">
+        <div class="panel-h">Cost breakdown</div>
+        <div class="panel-b">
+          <div id="p-cats"></div><hr class="pdiv"/>
+          <div class="pr"><span>Materials subtotal</span><b id="p-mat"></b></div>
+          <div class="pr"><span id="p-lab-l">Labor (est. 20%)</span><b id="p-lab"></b></div>
+          <div class="pr"><span>Contingency (10%)</span><b id="p-con"></b></div>
+          <hr class="pdiv"/>
+          <div class="ptotal"><span>Total</span><b id="p-tot"></b></div>
+          <p class="pnote">Material prices come from the live Vreymar catalog (VAT and delivery are added at checkout). Labor and contingency are estimates and vary by contractor. Estimates can be wrong, check quantities with your builder.</p>
+          <button class="btn btn-accent btn-block" id="add-all" style="margin-bottom:8px">Add all materials to cart</button>
+          <button class="btn btn-outline btn-block" id="print" style="margin-bottom:8px">Print or save as PDF</button>
+          <button class="btn btn-outline btn-block" id="restart">Start a new estimate</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <div class="foot"><div class="container">
+    <div class="foot-l"><div class="k">Project estimate</div><div class="p" id="f-proj"></div></div>
+    <div class="foot-r"><div class="k">Total budget required</div><div class="v" id="f-tot"></div><div class="n">Materials + labor + 10% contingency</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap"><a class="btn btn-outline btn-sm" href="cart.html">View cart</a><button class="btn btn-accent btn-sm" id="add-all-2">Add all to cart</button></div>
+    </div>
+  </div></div>
+</section>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/photos.js"></script>
+<script src="assets/js/art.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/estimator.js"></script>
+<script>
+(function(){
+  const {Catalog, CAT_COLORS, peso, pesoShort, esc} = VH;
+  const $ = id => document.getElementById(id);
+  const BUD = {eco:'Economy',mid:'Mid-range',pre:'Premium'};
+  let budget = 'mid', spec = null, result = null, lastPrompt = '';
+  try{ spec = JSON.parse(sessionStorage.getItem('vh_spec')||'null'); }catch(e){}
+
+  function updateDetected(){
+    const p = $('prompt').value.trim();
+    if(!p){ $('detected').innerHTML=''; return; }
+    const t = Estimator.detectType(p, {}); const T = Estimator.TYPES[t];
+    $('detected').innerHTML = `Looks like: <b>${T.title}</b>`;
+    $('area-label').textContent = 'Total ' + T.areaLabel.toLowerCase();
+    $('area-hint').textContent = 'Example: ' + T.hint;
+    const a = Estimator.areaFromPrompt(p); if(a) $('sqm').value = a;
+  }
+  $('prompt').addEventListener('input', updateDetected);
+  $('suggest').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; $('prompt').value=b.dataset.q; $('sqm').value=b.dataset.a; updateDetected(); });
+  $('budget').addEventListener('click', e=>{ const b=e.target.closest('.bud'); if(!b) return; budget=b.dataset.b; document.querySelectorAll('.bud').forEach(x=>x.classList.toggle('on',x===b)); });
+
+  /* ── step navigation ── */
+  function goStep(n){
+    $('step-1').hidden = n!==1; $('step-2').hidden = n!==2;
+    $('ws-1').className = n===1?'on':'done'; $('ws-2').className = n===2?'on':(n>2?'done':'');
+    window.scrollTo({top:0});
+    const first = n===1 ? $('prompt') : $('back-1'); if(first) first.focus({preventScroll:true});
+  }
+  function step1Errors(){
+    const err = [];
+    if($('prompt').value.trim().length < 8) err.push(['prompt','Describe what you want to build in a few words.']);
+    if(!(parseFloat($('sqm').value) > 0)) err.push(['sqm','Enter the area in square meters.']);
+    return err;
+  }
+  $('to-step-2').onclick = ()=>{
+    const err = step1Errors();
+    if(err.length){ UI.toast(err[0][1],'warn'); $(err[0][0]).focus(); return; }
+    // pre-select the scope this kind of project usually needs (only the first time)
+    const t = Estimator.detectType($('prompt').value, {});
+    if(!document.querySelector('#sp-inc input:checked')){
+      const inc = (spec && spec.includes) || Estimator.INCLUDE_DEFAULTS[t];
+      document.querySelectorAll('#sp-inc input').forEach(c=>c.checked = inc.includes(c.value));
+    }
+    const roomGuess = {restroom:'Restroom / Bathroom', kitchen:'Kitchen', fence:'Outdoor / Perimeter', roofing:'Roof'}[t];
+    if(roomGuess && !$('sp-room').value) $('sp-room').value = roomGuess;
+    const typeGuess = {fence:'Perimeter Fence / Wall', roofing:'Roof Replacement', flooring:'Flooring Installation Only'}[t];
+    if(typeGuess && !$('sp-ctype').value) $('sp-ctype').value = typeGuess;
+    $('s2-sub').textContent = 'For: “'+$('prompt').value.trim()+'” · '+$('sqm').value+' sqm · '+BUD[budget]+'. Everything here is required unless marked optional.';
+    goStep(2); checkStep2();
+  };
+  $('back-1').onclick = ()=>goStep(1);
+
+  /* ── blueprint upload (required) ── */
+  const MAX = 20*1024*1024, OK_EXT = /\.(jpe?g|png|pdf|dwg|svg)$/i;
+  let bp = spec && spec.blueprintName ? {name:spec.blueprintName, size:spec.blueprintSize||0, preview:null} : null;
+  function showFile(){
+    const up=$('up'); up.classList.toggle('has', !!bp); up.classList.remove('err'); $('e-bp').textContent='';
+    if(!bp){ $('up-t').textContent='Click to upload or drag your plan here'; $('up-s').textContent='Required'; $('up-prev').hidden=true; return; }
+    $('up-t').textContent = bp.name; $('up-s').textContent = (bp.size?(bp.size/1048576).toFixed(2)+' MB · ':'')+'click to replace';
+    if(bp.preview){ $('up-prev').src=bp.preview; $('up-prev').hidden=false; } else $('up-prev').hidden=true;
+  }
+  function setFile(f){
+    if(!OK_EXT.test(f.name)){ $('up').classList.add('err'); $('e-bp').textContent='That file type isn\'t accepted. Use JPG, PNG, PDF, DWG or SVG.'; return; }
+    if(f.size > MAX){ $('up').classList.add('err'); $('e-bp').textContent='That file is '+(f.size/1048576).toFixed(1)+' MB. The limit is 20 MB.'; return; }
+    bp = {name:f.name, size:f.size, preview:null};
+    if(/^image\//.test(f.type) && f.type!=='image/svg+xml'){ const r=new FileReader(); r.onload=()=>{ bp.preview=r.result; showFile(); }; r.readAsDataURL(f); }
+    showFile(); checkStep2();
+  }
+  $('bp').onchange = e=>{ if(e.target.files[0]) setFile(e.target.files[0]); };
+  $('up').addEventListener('dragover', e=>{e.preventDefault();$('up').classList.add('drag');});
+  $('up').addEventListener('dragleave', ()=>$('up').classList.remove('drag'));
+  $('up').addEventListener('drop', e=>{e.preventDefault();$('up').classList.remove('drag');if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);});
+
+  /* ── step 2 validation: Generate stays locked until everything is in ── */
+  const REQ = [['sp-ctype','Construction type'],['sp-room','Room or area'],['sp-floor','Floor level'],['sp-access','Truck access'],['sp-soil','Soil condition'],['sp-city','City or municipality']];
+  function missingList(){
+    const m = [];
+    if(!bp) m.push(['up','Floor plan or blueprint']);
+    REQ.forEach(([id,l])=>{ if(!$(id).value.trim()) m.push([id,l]); });
+    if(!document.querySelector('#sp-inc input:checked')) m.push(['sp-inc','At least one item the list should cover']);
+    return m;
+  }
+  let triedGenerate = false;
+  function checkStep2(){
+    const m = missingList();
+    $('generate').disabled = m.length>0;
+    $('missing').innerHTML = m.length ? `<b>Still needed before we can count your materials</b>${m.map(x=>esc(x[1])).join(' · ')}` : '';
+    if(triedGenerate){ ['up',...REQ.map(r=>r[0]),'sp-inc'].forEach(id=>$(id).classList.toggle('err', m.some(x=>x[0]===id))); }
+    return m;
+  }
+  REQ.forEach(([id])=>$(id).addEventListener(id==='sp-city'?'input':'change', checkStep2));
+  $('sp-inc').addEventListener('change', checkStep2);
+  // the disabled button still explains itself when tapped
+  $('missing').parentElement.addEventListener('click', e=>{ if(e.target.closest('#generate') && $('generate').disabled){ triedGenerate=true; const m=checkStep2(); if(m.length) $(m[0][0]).scrollIntoView({behavior:'smooth',block:'center'}); } }, true);
+
+  function collectSpec(){
+    spec = { hasBlueprint:true, blueprintName:bp.name, blueprintSize:bp.size, constructionType:$('sp-ctype').value, roomType:$('sp-room').value, projectName:$('sp-name').value.trim(),
+      floorLevel:$('sp-floor').value, siteAccess:$('sp-access').value, soilCondition:$('sp-soil').value, city:$('sp-city').value.trim(),
+      tileFloor:$('sp-tile').value, fixtureGrade:$('sp-fix').value, notes:$('sp-notes').value.trim(),
+      includes:[...document.querySelectorAll('#sp-inc input:checked')].map(c=>c.value) };
+    try{ sessionStorage.setItem('vh_spec', JSON.stringify(spec)); }catch(e){}
+  }
+  function restoreSpec(){
+    if(!spec) return;
+    const set=(id,v)=>{ if(v) $(id).value=v; };
+    set('sp-ctype',spec.constructionType); set('sp-room',spec.roomType); set('sp-name',spec.projectName); set('sp-floor',spec.floorLevel);
+    set('sp-access',spec.siteAccess); set('sp-soil',spec.soilCondition); set('sp-city',spec.city); set('sp-tile',spec.tileFloor); set('sp-fix',spec.fixtureGrade); set('sp-notes',spec.notes);
+    if(spec.includes) document.querySelectorAll('#sp-inc input').forEach(c=>c.checked = spec.includes.includes(c.value));
+    showFile();
+  }
+
+  /* generate, only reachable with a blueprint and complete site details */
+  function run(){
+    if(step1Errors().length){ goStep(1); return; }
+    if(missingList().length){ triedGenerate=true; checkStep2(); return; }
+    collectSpec();
+    const prompt = $('prompt').value.trim(), sqm = parseFloat($('sqm').value);
+    lastPrompt = prompt;
+    $('ws-2').className='done'; $('ws-3').className='on';
+    $('input').style.display='none'; $('loading').style.display='flex'; window.scrollTo(0,0);
+    const t = Estimator.TYPES[Estimator.detectType(prompt, spec)];
+    const steps = ['Reading your project description', 'Attaching plan “'+spec.blueprintName+'” for staff review', 'Applying site details: '+spec.floorLevel.toLowerCase()+', '+spec.siteAccess.toLowerCase(), 'Matching items to Vreymar shelf prices', 'Calculating quantities for '+sqm+' sqm', 'Compiling your '+t.title.toLowerCase()+' list'];
+    const box = $('ld-steps'); box.innerHTML=''; $('ld-fill').style.width='0';
+    steps.forEach((s,i)=>setTimeout(()=>{
+      if(box.lastElementChild){ box.lastElementChild.classList.add('done'); box.lastElementChild.querySelector('i').textContent='✓'; }
+      box.insertAdjacentHTML('beforeend', `<div class="ld-step"><i></i>${esc(s)}</div>`);
+      $('ld-fill').style.width = ((i+1)/steps.length*100)+'%';
+    }, i*420+150));
+    setTimeout(()=>{
+      result = Estimator.generate({prompt, sqm, budget, spec});
+      try{ sessionStorage.setItem('vh_last_estimate', JSON.stringify({prompt, sqm, budget, blueprint:spec.blueprintName, title:result.title})); }catch(e){}
+      showResults();
+    }, steps.length*420+500);
+  }
+  $('generate').onclick = run;
+
+  function recalc(){
+    result.materials = 0; result.lineCount = 0;
+    result.categories.forEach(c=>{ c.total = c.items.reduce((a,i)=>a+i.price*i.qty,0); result.materials += c.total; result.lineCount += c.items.length; c.items.forEach(i=>{ i.line=i.price*i.qty; i.short=i.qty>i.stock; }); });
+    result.labor = Math.round(result.materials*result.laborPct); result.contingency = Math.round(result.materials*0.10);
+    result.grand = Math.round(result.materials)+result.labor+result.contingency;
+  }
+
+  function showResults(){
+    $('loading').style.display='none'; $('results').style.display='block'; window.scrollTo(0,0);
+    $('r-title').textContent = (spec&&spec.projectName ? spec.projectName+', ' : '') + result.title;
+    $('r-area').textContent = result.sqm+' sqm'; $('r-budget').textContent = BUD[result.budget];
+    $('r-plan').textContent = 'Plan: '+spec.blueprintName; $('r-site').textContent = spec.floorLevel+' · '+spec.city;
+    $('r-prompt').textContent = lastPrompt ? '“'+lastPrompt+'”' : '';
+    $('notes').innerHTML = result.notes.length ? `<div class="notes"><b>Notes</b><ul>${result.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
+    drawSections(); drawTotals();
+  }
+
+  function drawSections(){
+    const inCart = new Set(VH.Cart.items().map(c=>c.id));
+    $('sections').innerHTML = result.categories.map((c,ci)=>`
+      <div class="sect" id="sect-${ci}">
+        <button class="sect-head" data-toggle="${ci}"><span class="t">${esc(c.label)}</span><span class="c">${c.items.length} items</span><span class="v" id="ct-${ci}">${pesoShort(c.total)}</span><span class="chev"></span></button>
+        <div class="sect-body">${c.items.map((it,ii)=>{
+          const cat = Catalog.category(it.catId);
+          return `<div class="row">
+            <div class="row-ic" data-tile="${UI.tileOf(it.catId)}">${Art.cat(it.catId)}</div>
+            <div><div class="row-name">${esc(it.name)}</div><div class="row-meta">${esc(it.brand||'')} · ${esc(it.sku)} · ${peso(it.price)} / ${esc(it.unit)}</div>
+              ${it.note?`<div class="row-note">${esc(it.note)}</div>`:''}<div class="row-warn" id="w-${ci}-${ii}">${it.short?(it.stock?'Only '+it.stock+' in stock':'Currently out of stock'):''}</div></div>
+            <div class="qty-ctrl"><button class="qty-btn" data-d="-1" data-k="${ci}-${ii}" aria-label="Decrease">−</button><input class="qty-num" data-k="${ci}-${ii}" type="number" min="0" value="${it.qty}" aria-label="Quantity"/><button class="qty-btn" data-d="1" data-k="${ci}-${ii}" aria-label="Increase">+</button></div>
+            <div class="row-total"><b id="lt-${ci}-${ii}">${peso(it.line)}</b><button data-addone="${ci}-${ii}" class="${inCart.has(it.id)?'ok':''}">${inCart.has(it.id)?'✓ In cart':'+ Add'}</button></div>
+          </div>`;}).join('')}</div>
+      </div>`).join('');
+  }
+  function drawTotals(){
+
+    $('s-mat').textContent = pesoShort(result.materials); $('s-lines').textContent = result.lineCount+' line items';
+    $('s-lab').textContent = pesoShort(result.labor); $('s-labpct').textContent = Math.round(result.laborPct*100)+'% of materials';
+    $('s-con').textContent = pesoShort(result.contingency); $('s-tot').textContent = pesoShort(result.grand);
+    $('p-cats').innerHTML = result.categories.map(c=>`<div class="pr"><span>${esc(c.label)}</span><b>${pesoShort(c.total)}</b></div>`).join('');
+    $('p-mat').textContent = peso(result.materials); $('p-lab-l').textContent='Labor (est. '+Math.round(result.laborPct*100)+'%)'; $('p-lab').textContent = peso(result.labor);
+    $('p-con').textContent = peso(result.contingency); $('p-tot').textContent = pesoShort(result.grand);
+    $('f-proj').textContent = result.title+', '+result.sqm+' sqm · '+BUD[result.budget];
+    $('f-tot').textContent = pesoShort(result.grand);
+    result.categories.forEach((c,ci)=>{ const el=$('ct-'+ci); if(el) el.textContent=pesoShort(c.total); });
+  }
+  function setQty(k, v){
+    const [ci,ii] = k.split('-').map(Number); const it = result.categories[ci].items[ii];
+    it.qty = Math.max(0, Math.round(v)||0); recalc();
+    document.querySelector(`.qty-num[data-k="${k}"]`).value = it.qty;
+    $('lt-'+k).textContent = peso(it.line);
+    $('w-'+k).textContent = it.short ? (it.stock?'Only '+it.stock+' in stock':'Currently out of stock') : '';
+    drawTotals(); UI.flash($('lt-'+k)); UI.flash($('p-tot').parentElement);
+  }
+  $('sections').addEventListener('click', e=>{
+    const t = e.target.closest('[data-toggle]'); if(t){ $('sect-'+t.dataset.toggle).classList.toggle('closed'); return; }
+    const d = e.target.closest('[data-d]'); if(d){ const inp=document.querySelector(`.qty-num[data-k="${d.dataset.k}"]`); setQty(d.dataset.k, (+inp.value||0)+(+d.dataset.d)); return; }
+    const a = e.target.closest('[data-addone]'); if(a){ const [ci,ii]=a.dataset.addone.split('-').map(Number); const it=result.categories[ci].items[ii];
+      if(!it.qty) return UI.toast('Set a quantity first.','warn');
+      const r = UI.addToCart(it.id, it.qty); if(r.ok){ a.textContent='✓ In cart'; a.classList.add('ok'); } }
+  });
+  $('sections').addEventListener('change', e=>{ if(e.target.classList.contains('qty-num')) setQty(e.target.dataset.k, +e.target.value); });
+
+  function addAll(){
+    let added=0, capped=0, skipped=0;
+    result.categories.forEach(c=>c.items.forEach(it=>{
+      if(!it.qty) return;
+      const r = VH.Cart.add(it.id, it.qty);
+      if(!r.ok){ skipped++; return; } added++; if(r.capped) capped++;
+    }));
+    drawSections();
+    UI.toast(`${added} material${added!==1?'s':''} added to cart`+(capped?` (${capped} limited by stock)`:'')+(skipped?` · ${skipped} out of stock`:''), skipped||capped?'warn':'success');
+  }
+  $('add-all').onclick = e=>UI.busy(e.currentTarget, addAll); $('add-all-2').onclick = e=>UI.busy(e.currentTarget, addAll);
+  $('print').onclick = ()=>window.print();
+  function restart(e){ if(e) e.preventDefault(); $('results').style.display='none'; $('input').style.display='grid'; $('ws-3').className=''; goStep(e && e.currentTarget && e.currentTarget.id==='crumb-back' ? 2 : 1); }
+  $('restart').onclick = restart; $('crumb-back').onclick = restart;
+
+  // URL params from home page
+  const P = new URLSearchParams(location.search);
+  if(P.get('q')) $('prompt').value = P.get('q');
+  if(P.get('sqm')) $('sqm').value = P.get('sqm');
+  updateDetected(); restoreSpec();
+  // shortcuts (home slip, saved links) never skip the plan: they prefill step 1 and open step 2
+  if(P.get('go')==='1' && P.get('q')) $('to-step-2').click();
+})();
+</script>
+</body>
+</html>

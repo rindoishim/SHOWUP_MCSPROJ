@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Account | Vreymar Hardware</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/site.css"/>
+<style>
+.wrap{display:grid;grid-template-columns:272px minmax(0,1fr);gap:16px;align-items:start;padding-bottom:140px}
+.wrap>*{min-width:0}
+/* side panel: 28px corner, 8px inset, so the profile block and nav rows are 20px / 14px */
+.side{position:sticky;top:calc(var(--nav-h) + 16px);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-xl);padding:8px}
+.prof{padding:20px 18px;border-radius:var(--r-lg);background:var(--field);color:#fff}
+.prof .avatar{width:52px;height:52px;font-size:19px;margin-bottom:14px}
+.prof b{display:block;font-size:20px;font-weight:600;letter-spacing:-.025em;line-height:1.15}
+.prof span{font-size:13px;color:oklch(100% 0 0 / .72)}
+.sn{padding:8px 0 0;display:flex;flex-direction:column;gap:2px}
+.sn button,.sn a{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:var(--r-md);background:none;border:0;font-size:15px;font-weight:500;color:var(--ink-2);cursor:pointer;text-decoration:none;text-align:left;transition:background-color .15s,color .15s}
+.sn button:hover,.sn a:hover{background:var(--hover);color:var(--ink)}
+.sn button.on{color:var(--on-fill);background:var(--fill)}
+.sn .badge{margin-left:auto;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:600;min-width:22px;height:22px;padding:0 7px;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.view{display:none}.view.on{display:block;animation:viewIn .4s var(--ease-out)}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px);filter:blur(4px)}}
+.vhead{padding:8px 4px 22px}
+.h2{font-size:clamp(32px,3.4vw,44px);font-weight:600;line-height:1;letter-spacing:-.045em}
+.h2s{font-size:16px;color:var(--ink-2);margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px}
+.stat:first-child{background:var(--tile-safety);border-color:transparent;color:var(--on-accent)}
+.stat:first-child .l{color:var(--on-accent)}
+.stat .l{font-size:14px;font-weight:500;color:var(--ink-2)}
+.stat .v{font-size:36px;font-weight:600;letter-spacing:-.05em;line-height:1;margin-top:10px;font-variant-numeric:tabular-nums}
+.ftabs{display:inline-flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;padding:4px;border-radius:var(--r-md);background:var(--sunken);border:1px solid var(--line)}
+.ftabs button{padding:0 16px;min-height:38px;border:0;border-radius:var(--r-sm);background:transparent;font-weight:500;font-size:14px;color:var(--ink-2);cursor:pointer;transition:background-color .15s,color .15s}
+.ftabs button:hover{color:var(--ink)}
+.ftabs button.on{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+/* order cards: 20px corner */
+.oc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.oc:hover,.oc.open{border-color:var(--line-2)}
+.oh{display:flex;align-items:center;gap:20px;padding:18px 20px;cursor:pointer;width:100%;background:none;border:0;text-align:left}
+.oh-ref{font-size:18px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.oh-d{font-size:14px;color:var(--muted);margin-top:4px}
+.oh-t{margin-left:auto;text-align:right}
+.oh-t small{display:block;font-size:13px;color:var(--muted)}
+.oh-t b{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.oc.open .oh-arr{transform:rotate(180deg)}
+.ob{display:none;padding:2px 20px 20px}
+.oc.open .ob{display:block;animation:viewIn .35s var(--ease-out)}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;margin-bottom:14px}
+.tbl th{font-size:13px;font-weight:500;color:var(--muted);text-align:left;padding:9px 12px;background:var(--sunken)}
+.tbl th:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}.tbl th:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--line)}
+.tbl .r{text-align:right;font-variant-numeric:tabular-nums}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.meta div{background:var(--sunken);border-radius:var(--r-md);padding:12px 14px;font-size:15px;font-weight:500}
+.meta small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-bottom:3px}
+/* order tracker: rounded segments */
+.track{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0 20px}
+.tk{font-size:14px;font-weight:500;color:var(--muted);padding-top:14px;position:relative}
+.tk::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;border-radius:var(--r-pill);background:var(--hover-2)}
+.tk.done{color:var(--ink)}.tk.done::before{background:var(--success)}
+.tk.cur{color:var(--ink)}.tk.cur::before{background:var(--accent-grad)}
+.tk small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.rep{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:8px}
+.rep-h{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.rep-h b{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.rep-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0}
+.rep-flow div{font-size:14px;font-weight:500;color:var(--muted);padding-top:12px;position:relative}
+.rep-flow div::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;border-radius:var(--r-pill);background:var(--hover-2)}
+.rep-flow div.done{color:var(--ink)}.rep-flow div.done::before{background:var(--success)}
+.rep-flow div.cur{color:var(--ink)}.rep-flow div.cur::before{background:var(--accent-grad)}
+.rep-flow div.bad::before{background:var(--danger)}
+.note{background:var(--sunken);border-radius:var(--r-md);padding:12px 14px;font-size:15px;margin-top:10px}
+.wait-box{background:var(--warn-tint);border-radius:var(--r-md);padding:14px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:15px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--sunken);cursor:pointer;margin-bottom:6px;font-size:15px;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.opt:hover{border-color:var(--line-2)}
+.opt input{width:18px;height:18px;margin-top:2px;flex-shrink:0}
+.opt:has(input[type=radio]:checked){background:var(--paper);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.opt:has(input:disabled){opacity:.55;cursor:not-allowed}
+.opt b{display:block;font-size:15px;font-weight:600}
+.opt span{font-size:14px;color:var(--muted)}
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.reasons .opt{margin:0}
+.quote{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--accent-grad);color:var(--on-accent);border-radius:var(--r-md);padding:14px 16px;margin:6px 0 16px;font-size:14px}
+.quote b{font-size:28px;font-weight:600;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.policy{background:var(--sunken);border-radius:var(--r-md);padding:14px 16px;font-size:14px;line-height:1.6;margin-bottom:12px}
+.policy li{margin-left:18px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static;padding:6px;border-radius:var(--r-lg)}.prof{display:none}.sn{flex-direction:row;overflow-x:auto;padding:0;scrollbar-width:none}.sn::-webkit-scrollbar{display:none}.sn button,.sn a{white-space:nowrap;width:auto}.stats{grid-template-columns:1fr 1fr}.meta{grid-template-columns:1fr}}
+@media (max-width:600px){.track,.rep-flow{grid-template-columns:repeat(2,1fr)}.reasons{grid-template-columns:1fr}.oh{flex-wrap:wrap;gap:10px}}
+</style>
+</head>
+<body data-page="account">
+
+<header class="page-header"><div class="container"><div>
+  
+  <h1 class="page-title" id="welcome">My account</h1><p class="page-sub">Your orders, deliveries and replacement requests in one place.</p></div></div></header>
+
+<div class="container wrap">
+  <aside class="side">
+    <div class="prof"><div class="avatar" id="p-av"></div><b id="p-name"></b><span id="p-email"></span></div>
+    <nav class="sn" id="sn" aria-label="Account sections">
+      <button data-v="dashboard" class="on">Overview</button>
+      <button data-v="orders">Order history <span class="badge" id="b-orders" style="display:none"></span></button>
+      <button data-v="replacements">Replacements <span class="badge" id="b-reps" style="display:none"></span></button>
+      <button data-v="profile">Profile & security</button>
+      <a href="admin/index.html" id="staff-link" style="display:none">Staff portal</a>
+      <a href="#" id="logout" style="color:var(--danger)">Sign out</a>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="view on" id="v-dashboard" aria-labelledby="t-dash">
+      <div class="vhead"><h2 class="h2" id="t-dash">Your orders at a glance</h2><p class="h2s">Orders still on the way, and what you've spent with us.</p></div>
+      <div class="stats">
+        <div class="stat"><div class="l">Orders</div><div class="v" id="st-total">0</div></div>
+        <div class="stat"><div class="l">Completed</div><div class="v" id="st-del">0</div></div>
+        <div class="stat"><div class="l">On the way</div><div class="v" id="st-prog">0</div></div>
+        <div class="stat"><div class="l">Total spent</div><div class="v" id="st-spent">₱0</div></div>
+      </div>
+      <div id="dash-active"></div>
+      <div class="vhead" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--accent);margin-top:4px">
+        <div><h3 class="h2" style="font-size:34px">Planning another project?</h3><p class="h2s" style="color:var(--ink)">Get the full material list, priced, before you buy.</p></div>
+        <a class="btn btn-primary" href="estimate.html">Start an estimate</a></div>
+    </section>
+
+    <section class="view" id="v-orders" aria-labelledby="t-orders">
+      <div class="vhead"><h2 class="h2" id="t-orders">Order history</h2><p class="h2s">Track each order, reorder in one click, or report a problem within 7 days of receiving it.</p></div>
+      <div class="ftabs" id="ftabs">
+        <button data-f="all" class="on">All</button><button data-f="active">On the way</button><button data-f="delivered">Completed</button><button data-f="cancelled">Cancelled</button>
+      </div>
+      <div id="orders"></div>
+    </section>
+
+    <section class="view" id="v-replacements" aria-labelledby="t-reps">
+      <div class="vhead"><h2 class="h2" id="t-reps">Replacements</h2><p class="h2s">Every request goes through review, then a stock check. If the replacement is out of stock, you can wait or take a refund.</p></div>
+      <div id="reps"></div>
+    </section>
+
+    <section class="view" id="v-profile" aria-labelledby="t-prof">
+      <div class="vhead"><h2 class="h2" id="t-prof">Profile & security</h2><p class="h2s" id="p-role"></p></div>
+      <div class="card" style="margin-bottom:4px"><div class="card-body">
+        <h3 class="card-title" style="margin-bottom:16px">Account details</h3>
+        <div class="alert" id="pf-alert" role="alert"></div>
+        <div class="grid-2">
+          <div class="field"><label class="label" for="pf-first">First name</label><input class="input" id="pf-first"/></div>
+          <div class="field"><label class="label" for="pf-last">Last name</label><input class="input" id="pf-last"/></div>
+          <div class="field"><label class="label" for="pf-email">Email</label><input class="input" id="pf-email" type="email"/></div>
+          <div class="field"><label class="label" for="pf-phone">Mobile number</label><input class="input" id="pf-phone" type="tel"/></div>
+          <div class="field full"><label class="label" for="pf-addr">Default delivery address</label><input class="input" id="pf-addr" placeholder="House no., street, barangay"/></div>
+          <div class="field"><label class="label" for="pf-city">City</label><input class="input" id="pf-city"/></div>
+          <div class="field"><label class="label" for="pf-prov">Province</label><input class="input" id="pf-prov"/></div>
+        </div>
+        <button class="btn btn-primary" id="pf-save">Save changes</button>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h3 class="card-title" style="margin-bottom:16px">Change password</h3>
+        <div class="alert" id="pw-alert" role="alert"></div>
+        <div class="grid-2">
+          <div class="field full"><label class="label" for="pw-cur">Current password</label><input class="input" id="pw-cur" type="password" autocomplete="current-password"/></div>
+          <div class="field"><label class="label" for="pw-new">New password</label><input class="input" id="pw-new" type="password" autocomplete="new-password" aria-describedby="pw-hint"/><span class="hint" id="pw-hint">At least 8 characters</span></div>
+          <div class="field"><label class="label" for="pw-new2">Confirm new password</label><input class="input" id="pw-new2" type="password" autocomplete="new-password"/></div>
+        </div>
+        <button class="btn btn-primary" id="pw-save">Update password</button>
+      </div></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="rep-modal" role="dialog" aria-modal="true" aria-labelledby="rep-t">
+  <div class="modal" style="width:640px">
+    <div class="modal-head"><div><div class="modal-title" id="rep-t">Report a problem</div><div class="modal-sub" id="rep-sub"></div></div><button class="modal-x" data-close="rep-modal" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="alert error" id="rep-alert" role="alert"></div>
+      <div class="field"><span class="label">Which item?</span><div id="rep-items"></div></div>
+      <div class="field"><span class="label">What's wrong?</span><div class="reasons">
+        <label class="opt"><input type="radio" name="reason" value="Defective item"/><div><b>Defective</b><span>Doesn't work or broken on arrival</span></div></label>
+        <label class="opt"><input type="radio" name="reason" value="Damaged in transit"/><div><b>Damaged in transit</b><span>Damaged during delivery</span></div></label>
+        <label class="opt"><input type="radio" name="reason" value="Wrong item received"/><div><b>Wrong item</b><span>Different from what was ordered</span></div></label>
+        <label class="opt"><input type="radio" name="reason" value="Incomplete order"/><div><b>Incomplete</b><span>Missing parts or quantity</span></div></label>
+      </div></div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="rep-qty">How many units?</label><input class="input" id="rep-qty" type="number" min="1" value="1" aria-describedby="rep-qty-h"/><span class="hint" id="rep-qty-h"></span></div>
+        <div class="field"><label class="label" for="rep-res">What would you like?</label><select class="select" id="rep-res"><option value="Replacement">A replacement</option><option value="Refund">A refund</option></select></div>
+      </div>
+      <div class="field" id="unavail-field"><span class="label">If the replacement is out of stock</span>
+        <label class="opt"><input type="radio" name="unavail" value="wait" checked/><div><b>I'll wait for restock</b><span>We send it as soon as it arrives. If it hasn't arrived after 14 days, we refund you.</span></div></label>
+        <label class="opt"><input type="radio" name="unavail" value="refund"/><div><b>Refund me instead</b><span>Skip the wait and get your money back.</span></div></label>
+      </div>
+      <div class="quote"><span><b style="font-family:var(--font-body);font-size:16px;display:block">Quotation</b>Refund value of the claimed units, VAT included</span><b id="rep-quote">₱0.00</b></div>
+      <div class="field"><label class="label" for="rep-desc">Describe the problem</label><textarea class="textarea" id="rep-desc" placeholder="What happened? Details help our team decide faster."></textarea></div>
+      <div class="field"><label class="label" for="rep-contact">Contact number for this request</label><input class="input" id="rep-contact" type="tel" placeholder="09XX XXX XXXX"/></div>
+      <div class="policy"><b>Before you submit</b><ul>
+        <li>Keep the item and its packaging. We may ask for photos or inspect it on pickup.</li>
+        <li>Our team reviews requests within 1–3 business days.</li>
+        <li>Refunds go back through your original payment method (cash for COD and pickup orders) within 3–7 business days.</li>
+      </ul></div>
+      <label class="opt" style="background:var(--paper);padding:0;margin:0"><input type="checkbox" id="rep-agree"/><div>I agree to the <a href="about.html#policy" target="_blank" style="font-weight:700">Return & Replacement Policy</a>.</div></label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" data-close="rep-modal">Cancel</button><button class="btn btn-primary" id="rep-submit">Submit request</button></div>
+  </div>
+</div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/photos.js"></script>
+<script src="assets/js/art.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+(function(){
+  const {Auth, Orders, Replacements, Cart, RULES, ORDER_FLOW, PAY_LABEL, statusLabel, peso, pesoShort, esc, fmtDate, fmtDateTime, fmtLongDate} = VH;
+  const $ = id => document.getElementById(id);
+  let user = Auth.current();
+  if(!user){ location.replace('login.html?next=account.html'); return; }
+  let filter='all', repOrder=null;
+
+  function header(){
+    user = Auth.current();
+    $('welcome').textContent = 'Hi, '+user.first+'.';
+    $('p-av').textContent = Auth.initials(user); $('p-name').textContent = Auth.fullName(user); $('p-email').textContent = user.email;
+    $('staff-link').style.display = Auth.isStaff(user)?'flex':'none';
+  }
+  function show(v){
+    document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on', x.id==='v-'+v));
+    document.querySelectorAll('#sn [data-v]').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+    if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
+  }
+  $('sn').addEventListener('click', e=>{ const b=e.target.closest('[data-v]'); if(b) show(b.dataset.v); });
+  $('logout').onclick = e=>{ e.preventDefault(); Auth.logout(); location.href='login.html'; };
+
+  const mine = () => Orders.byUser(user.id).sort((a,b)=>new Date(b.placedAt)-new Date(a.placedAt));
+  const active = o => !['delivered','cancelled'].includes(o.status);
+
+  function tracker(o){
+    if(o.status==='cancelled') return `<div class="note">This order was cancelled${o.history.length?' on '+fmtDateTime(o.history[o.history.length-1].at):''}. Any reserved stock was released.</div>`;
+    const cur = ORDER_FLOW.indexOf(o.status);
+    return `<div class="track">${ORDER_FLOW.map((s,i)=>{ const h=o.history.find(x=>x.status===s);
+      return `<div class="tk${i<=cur?' done':''}${i===cur&&s!=='delivered'?' cur':''}">${statusLabel(o,s).replace(' Confirmation','')}<small>${h?fmtDateTime(h.at):''}</small></div>`; }).join('')}</div>`;
+  }
+  function orderCard(o, open){
+    const reps = Replacements.byUser(user.id).filter(r=>r.orderRef===o.ref);
+    const elig = o.status==='delivered' && o.items.some(i=>Replacements.eligibility(o,i.id).ok);
+    return `<div class="oc${open?' open':''}" id="oc-${o.ref}">
+      <button class="oh" data-toggle="${o.ref}" aria-expanded="${open?'true':'false'}">
+        <div><div class="oh-ref">${o.ref}</div><div class="oh-d">${fmtDate(o.placedAt)} · ${o.items.length} item${o.items.length!==1?'s':''} · ${o.method==='pickup'?'Store pickup':'Delivery'}</div></div>
+        <span class="pill st-${o.status}">${statusLabel(o)}</span>
+        <div class="oh-t"><small>Total</small><b>${peso(o.total)}</b></div><span class="chev oh-arr" aria-hidden="true"></span>
+      </button>
+      <div class="ob">
+        ${tracker(o)}
+        <table class="tbl"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>
+          ${o.items.map(i=>`<tr><td><b>${esc(i.name)}</b><div class="muted" style="font-size:13px">${esc(i.sku)}</div></td><td class="r">${i.qty} ${esc(i.unit||'')}</td><td class="r">${peso(i.price)}</td><td class="r"><b>${peso(i.price*i.qty)}</b></td></tr>`).join('')}
+          <tr><td colspan="3" class="r muted">Subtotal</td><td class="r">${peso(o.subtotal)}</td></tr>
+          ${o.discount?`<tr><td colspan="3" class="r muted">Promo ${esc(o.promo||'')}</td><td class="r" style="color:var(--danger)">-${peso(o.discount)}</td></tr>`:''}
+          <tr><td colspan="3" class="r muted">${o.method==='pickup'?'Store pickup':'Delivery'}</td><td class="r">${o.fee?peso(o.fee):'Free'}</td></tr>
+          <tr><td colspan="3" class="r muted">VAT (12%)</td><td class="r">${peso(o.vat)}</td></tr>
+          <tr><td colspan="3" class="r"><b>Total</b></td><td class="r" style="font-family:var(--font-head);font-size:24px;font-weight:900">${peso(o.total)}</td></tr>
+        </tbody></table>
+        <div class="meta">
+          <div><small>${o.method==='pickup'?'Pickup':'Delivery'} schedule</small>${o.schedule?fmtLongDate(o.schedule.date+'T00:00:00')+' · '+esc(o.schedule.slot):'-'}</div>
+          <div><small>Payment</small>${PAY_LABEL[o.pay]||esc(o.pay)}${o.proof?' · screenshot sent':''}</div>
+          <div><small>${o.method==='pickup'?'Where':'Deliver to'}</small>${esc(o.address)}</div>
+        </div>
+        ${reps.length?`<div class="note" style="margin:-4px 0 14px">${reps.length} replacement request${reps.length>1?'s':''} filed for this order. See Replacements.</div>`:''}
+        <div class="acts">
+          ${o.status==='pending'?`<button class="btn btn-sm btn-danger" data-cancel="${o.ref}">Cancel order</button>`:''}
+          ${elig?`<button class="btn btn-sm btn-primary" data-rep="${o.ref}">Report a problem</button>`:''}
+          <button class="btn btn-sm btn-outline" data-reorder="${o.ref}">Reorder these items</button>
+        </div>
+      </div></div>`;
+  }
+
+  /* replacement progress, following Fig. 7.5 of the defense */
+  function repFlow(r){
+    const stages = ['Submitted','Admin review', r.resolution==='Refund' || r.status==='refunding' ? 'Refund' : 'Stock check', 'Completed'];
+    const idx = {pending:1, rejected:1, waiting:2, processing:2, refunding:2, completed:3}[r.status];
+    return `<div class="rep-flow">${stages.map((s,i)=>`<div class="${i<idx?'done':i===idx?(r.status==='rejected'?'bad':(r.status==='completed'?'done':'cur')):''}">${s}</div>`).join('')}</div>`;
+  }
+  function render(){
+    const list = mine();
+    const del = list.filter(o=>o.status==='delivered').length, prog = list.filter(active).length;
+    $('st-total').textContent = list.length; $('st-del').textContent = del; $('st-prog').textContent = prog;
+    $('st-spent').textContent = pesoShort(list.filter(o=>o.status!=='cancelled').reduce((a,o)=>a+o.total,0));
+    $('b-orders').style.display = prog?'':'none'; $('b-orders').textContent = prog;
+    const act = list.filter(active);
+    $('dash-active').innerHTML = act.length ? act.map(o=>orderCard(o,true)).join('') : `<div class="empty" style="background:var(--paper)"><div class="empty-icon">${Art.cat(12)}</div><div class="empty-title">Nothing on the way</div><p style="margin-bottom:16px">Orders you place will show their progress here.</p><a class="btn btn-primary" href="materials.html">Shop materials</a></div>`;
+    const shown = list.filter(o=> filter==='all' || (filter==='active'?active(o):o.status===filter));
+    $('orders').innerHTML = shown.length ? shown.map(o=>orderCard(o,false)).join('') : `<div class="empty" style="background:var(--paper)"><div class="empty-title">No orders here</div><p>Orders you place online will appear here.</p></div>`;
+    const reps = Replacements.byUser(user.id);
+    const openReps = reps.filter(r=>['pending','waiting','processing','refunding'].includes(r.status)).length;
+    $('b-reps').style.display = openReps?'':'none'; $('b-reps').textContent = openReps;
+    $('reps').innerHTML = reps.length ? reps.map(r=>{
+      const last = r.notes[r.notes.length-1];
+      const waited = Replacements.waitingDays(r);
+      return `<div class="rep">
+      <div class="rep-h"><b>${r.ticket} · ${r.orderRef}</b><span class="pill st-${r.status}">${Replacements.label(r.status)}</span></div>
+      <div style="font-size:17px;font-weight:700">${esc(r.itemName)} <span class="muted" style="font-weight:500">× ${r.qty}</span></div>
+      <div class="muted" style="font-size:15px;margin-top:3px">${esc(r.reason)} · you asked for a ${r.resolution.toLowerCase()} · quotation ${peso(r.quote)}</div>
+      ${repFlow(r)}
+      <div style="font-size:15px">“${esc(r.desc)}”</div>
+      ${last&&last.note?`<div class="note"><b>Vreymar:</b> ${esc(last.note)}</div>`:''}
+      ${r.status==='waiting'?`<div class="wait-box"><span>Waiting ${waited} day${waited!==1?'s':''} for stock. We'll refund you automatically after ${RULES.STOCK_WAIT_DAYS} days, or you can take the refund now.</span><button class="btn btn-sm btn-primary" data-refund="${r.ticket}">Refund me instead (${peso(r.quote)})</button></div>`:''}
+      <div class="hint" style="margin-top:10px">Filed ${fmtDateTime(r.filedAt)}</div></div>`; }).join('')
+      : `<div class="empty" style="background:var(--paper)"><div class="empty-title">No requests</div><p>If something you received is defective, damaged, wrong or incomplete, report it from Order history within ${RULES.RETURN_DAYS} days.</p></div>`;
+  }
+
+  document.addEventListener('click', e=>{
+    const t = e.target.closest('[data-toggle]'); if(t){ const c=t.closest('.oc'); c.classList.toggle('open'); t.setAttribute('aria-expanded', c.classList.contains('open')); return; }
+    const c = e.target.closest('[data-cancel]'); if(c){ if(confirm('Cancel order '+c.dataset.cancel+'? Reserved stock will be released.')){ Orders.setStatus(c.dataset.cancel,'cancelled',Auth.fullName(user)); UI.toast('Order '+c.dataset.cancel+' cancelled.'); render(); } return; }
+    const ro = e.target.closest('[data-reorder]'); if(ro){ const o=Orders.get(ro.dataset.reorder); let n=0,miss=0; o.items.forEach(i=>{ const r=Cart.add(i.id,i.qty); r.ok?n++:miss++; }); UI.toast(n+' item(s) added to your cart'+(miss?' · '+miss+' out of stock':''), miss?'warn':'success'); return; }
+    const rp = e.target.closest('[data-rep]'); if(rp){ openRep(rp.dataset.rep); return; }
+    const rf = e.target.closest('[data-refund]'); if(rf){ if(confirm('Switch to a refund? You will no longer receive the replacement item.')){ Replacements.switchToRefund(rf.dataset.refund, Auth.fullName(user)); UI.toast('Switched to a refund. Expect it within '+RULES.REFUND_DAYS+'.','success'); render(); } }
+  });
+  $('ftabs').addEventListener('click', e=>{ const b=e.target.closest('[data-f]'); if(!b) return; filter=b.dataset.f; $('ftabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+
+  /* report a problem: the system checks eligibility first (Fig. 7.5, "Product eligible?") */
+  function selItem(){ const k=document.querySelector('input[name=ritem]:checked'); return k ? repOrder.items[+k.value] : null; }
+  function updQuote(){
+    const it = selItem(); if(!it) return;
+    const el = Replacements.eligibility(repOrder, it.id);
+    $('rep-qty').max = el.ok ? el.left : 1;
+    $('rep-qty-h').textContent = el.ok ? 'Up to '+el.left+' '+(it.unit||'')+' · '+el.daysLeft+' day'+(el.daysLeft!==1?'s':'')+' left to file' : '';
+    const q = Math.max(1, Math.min(+$('rep-qty').value||1, el.ok?el.left:1));
+    $('rep-quote').textContent = peso(Replacements.quote(it.price, q));
+    $('unavail-field').style.display = $('rep-res').value==='Replacement' ? '' : 'none';
+  }
+  function openRep(ref){
+    repOrder = Orders.get(ref);
+    const doneAt = (repOrder.history.find(h=>h.status==='delivered')||{at:repOrder.placedAt}).at;
+    $('rep-sub').textContent = 'Order '+ref+' · received '+fmtDate(doneAt);
+    let first = -1;
+    $('rep-items').innerHTML = repOrder.items.map((i,k)=>{ const el=Replacements.eligibility(repOrder,i.id); if(el.ok&&first<0) first=k;
+      return `<label class="opt"><input type="radio" name="ritem" value="${k}" ${el.ok?'':'disabled'} ${k===first?'checked':''}/><div><b>${esc(i.name)}</b><span>${esc(i.sku)} · ordered ${i.qty}${el.ok?'':' · '+esc(el.msg)}</span></div></label>`; }).join('');
+    document.querySelectorAll('input[name=reason]').forEach(r=>r.checked=false);
+    $('rep-qty').value=1; $('rep-res').value='Replacement'; $('rep-desc').value=''; $('rep-contact').value=user.contact||''; $('rep-agree').checked=false;
+    document.querySelector('input[name=unavail][value=wait]').checked=true;
+    $('rep-alert').classList.remove('show');
+    updQuote(); UI.openModal('rep-modal');
+  }
+  $('rep-items').addEventListener('change', updQuote); $('rep-qty').addEventListener('input', updQuote); $('rep-res').addEventListener('change', updQuote);
+  $('rep-submit').onclick = e=>UI.busy(e.currentTarget, submitRep);
+  function submitRep(){
+    const fail = m=>{ $('rep-alert').textContent=m; $('rep-alert').classList.add('show'); $('rep-alert').scrollIntoView({block:'center'}); };
+    const it = selItem(); const reason = document.querySelector('input[name=reason]:checked');
+    if(!it) return fail('Choose the item with the problem.');
+    const el = Replacements.eligibility(repOrder, it.id);
+    if(!el.ok) return fail(el.msg);
+    if(!reason) return fail('Tell us what is wrong with it.');
+    const qty = Math.floor(+$('rep-qty').value);
+    if(!(qty>=1 && qty<=el.left)) return fail('Units must be between 1 and '+el.left+'.');
+    if($('rep-desc').value.trim().length<10) return fail('Describe the problem in a sentence or two.');
+    const contact = $('rep-contact').value.replace(/[\s-]/g,'');
+    if(!/^(09|\+639)\d{9}$/.test(contact)) return fail('Enter a valid PH mobile number so we can reach you.');
+    if(!$('rep-agree').checked) return fail('Please agree to the Return & Replacement Policy.');
+    const r = Replacements.file({ userId:user.id, customer:Auth.fullName(user), phone:contact, orderRef:repOrder.ref, itemId:it.id, itemName:it.name, sku:it.sku, qty, unitPrice:it.price,
+      reason:reason.value, resolution:$('rep-res').value, ifUnavailable:$('rep-res').value==='Replacement'?document.querySelector('input[name=unavail]:checked').value:'refund', desc:$('rep-desc').value.trim() });
+    UI.closeModal('rep-modal'); UI.toast('Request '+r.ticket+' submitted. We review requests within 1–3 business days.','success');
+    render(); show('replacements');
+  }
+
+  // profile
+  function fillProfile(){
+    $('pf-first').value=user.first; $('pf-last').value=user.last; $('pf-email').value=user.email; $('pf-phone').value=user.contact||'';
+    $('pf-addr').value=user.address||''; $('pf-city').value=user.city||''; $('pf-prov').value=user.province||'';
+    $('p-role').textContent = VH.ROLES[user.role]+' account · member since '+fmtDate(user.createdAt);
+  }
+  const al = (id,m,t)=>{ const a=$(id); a.textContent=m; a.className='alert show '+t; };
+  $('pf-save').onclick = ()=>{
+    const email=$('pf-email').value.trim().toLowerCase(), phone=$('pf-phone').value.replace(/[\s-]/g,'');
+    if(!$('pf-first').value.trim()||!$('pf-last').value.trim()) return al('pf-alert','First and last name are required.','error');
+    if(!/^\S+@\S+\.\S+$/.test(email)) return al('pf-alert','Enter a valid email.','error');
+    if(Auth.users().some(u=>u.id!==user.id && u.email.toLowerCase()===email)) return al('pf-alert','That email is used by another account.','error');
+    if(phone && !/^(09|\+639)\d{9}$/.test(phone)) return al('pf-alert','Enter a valid PH mobile number.','error');
+    Auth.update(user.id,{first:$('pf-first').value.trim(),last:$('pf-last').value.trim(),email,contact:phone,address:$('pf-addr').value.trim(),city:$('pf-city').value.trim(),province:$('pf-prov').value.trim()});
+    header(); fillProfile(); al('pf-alert','Saved.','success');
+  };
+  $('pw-save').onclick = ()=>{
+    if($('pw-cur').value!==Auth.current().password) return al('pw-alert','Current password is incorrect.','error');
+    if($('pw-new').value.length<8) return al('pw-alert','New password must be at least 8 characters.','error');
+    if($('pw-new').value!==$('pw-new2').value) return al('pw-alert','New passwords do not match.','error');
+    Auth.update(user.id,{password:$('pw-new').value}); ['pw-cur','pw-new','pw-new2'].forEach(i=>$(i).value='');
+    al('pw-alert','Password updated.','success');
+  };
+
+  header(); fillProfile(); render();
+  const h = location.hash.slice(1); if(['dashboard','orders','replacements','profile'].includes(h)) show(h);
+  window.addEventListener('hashchange', ()=>{ const v=location.hash.slice(1); if(document.getElementById('v-'+v)) show(v); });
+})();
+</script>
+</body>
+</html>

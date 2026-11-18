@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Materials | Vreymar Hardware</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/site.css"/>
+<style>
+.shop{display:grid;grid-template-columns:272px minmax(0,1fr);gap:24px;padding-bottom:140px}
+.shop>main{min-width:0}
+/* one filter panel: 20px corner, sections divided by alpha lines */
+.sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(var(--nav-h) + 16px);align-self:start;max-height:calc(100vh - var(--nav-h) - 32px);max-height:calc(100dvh - var(--nav-h) - 32px);overflow-y:auto;scrollbar-width:thin}
+.f-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg)}
+.f-head{padding:16px 18px 2px;font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+.f-body{padding:10px 10px 12px}
+.f-search{position:relative;padding:6px}
+.f-search svg{position:absolute;left:22px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.f-search input{padding-left:42px;border-color:transparent;border-radius:var(--r-md)}
+/* filter rows: 14px corners inside the 20px panel (6px gutter) */
+.chk{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;cursor:pointer;font-size:15px;font-weight:400;width:100%;background:none;border:0;border-radius:var(--r-md);text-align:left;color:var(--ink-2);transition:background-color .15s,color .15s}
+.chk:hover{background:var(--hover);color:var(--ink)}
+.chk.on{background:var(--fill);color:var(--on-fill);font-weight:500}
+.chk .box{display:none}
+.chk .cnt{font-size:13px;color:inherit;opacity:.6;font-variant-numeric:tabular-nums}
+.price-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 6px}
+.toolbar{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 8px 8px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.result-count{font-size:15px;color:var(--ink-2);margin-right:auto}
+.result-count strong{font-size:20px;font-weight:600;letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:2px;height:34px;padding:0 4px 0 14px;border-radius:var(--r-pill);background:var(--accent-tint);color:var(--ink);font-size:14px;font-weight:500}
+/* the remove button is concentric with the chip: 17px − 4px = 13px (round) */
+.chip button{border:0;background:transparent;width:26px;height:26px;border-radius:var(--r-pill);cursor:pointer;color:var(--ink);transition:background-color .15s}
+.chip button:hover{background:var(--accent)}
+.view-seg{display:flex;gap:4px;padding:4px;border-radius:var(--r-md);background:var(--sunken)}
+.view-btn{width:36px;height:36px;border:0;border-radius:var(--r-sm);background:transparent;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background-color .15s,color .15s}
+.view-btn:hover{color:var(--ink)}
+.view-btn.on{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.toolbar .select{width:auto!important;min-height:44px;font-size:14px!important;padding:0 40px 0 14px!important;border-radius:var(--r-md)}
+.filter-toggle{display:none}
+.prod-grid{grid-template-columns:repeat(auto-fill,minmax(224px,1fr))}
+.prod-grid.list{grid-template-columns:1fr;gap:8px}
+.prod-grid.list .p-card{flex-direction:row;align-items:center;gap:8px}
+.prod-grid.list .p-img{width:120px;aspect-ratio:1;flex-shrink:0}
+.prod-grid.list .p-body{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 24px;padding:8px 12px 8px 10px}
+.prod-grid.list .p-name{flex:1 1 220px;margin:0;font-size:17px}
+.prod-grid.list .p-cat{flex-basis:100%;margin:0}
+.prod-grid.list .p-sku{flex-basis:100%;order:2;margin:0}
+.prod-grid.list .p-bottom{margin:0;gap:16px}
+.prod-grid.list .p-stock{margin:0;order:3}
+.pager{display:flex;justify-content:center;gap:6px;margin-top:32px;flex-wrap:wrap}
+.pg{min-width:44px;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);cursor:pointer;font-weight:500;font-size:15px;font-variant-numeric:tabular-nums;transition:background-color .15s}
+.pg:hover{background:var(--hover)}
+.pg.on{background:var(--fill);color:var(--on-fill);border-color:transparent}
+.pg:disabled{opacity:.35;pointer-events:none}
+/* quick view: the specimen beside its facts */
+.qv{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px}
+.qv-img{aspect-ratio:1;border-radius:var(--r-lg);background:var(--tile);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;isolation:isolate}
+.qv-img .art{width:62%}
+.qv-img img{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;mix-blend-mode:multiply}
+.qv-img:has(img) .art{display:none}
+.qv-cat{font-size:14px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.qv-name{font-size:30px;font-weight:600;line-height:1.05;letter-spacing:-.04em;margin-bottom:8px}
+.qv-desc{font-size:16px;color:var(--ink-2);line-height:1.6;margin:12px 0 16px}
+.qv-meta{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:15px;margin-bottom:20px;padding:14px 16px;border-radius:var(--r-md);background:var(--sunken)}
+.qv-meta dt{font-weight:500;color:var(--muted)}
+.qv-meta dd{color:var(--ink)}
+.qv-price{font-size:40px;font-weight:600;letter-spacing:-.05em;margin-bottom:18px;line-height:1}
+.qv-price small{font-size:15px;font-weight:400;letter-spacing:0;color:var(--muted)}
+.qv-buy{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media (max-width:900px){
+  .shop{grid-template-columns:1fr}
+  .sidebar{position:fixed;top:8px;left:8px;bottom:8px;width:304px;max-height:none;background:var(--raised);border:1px solid var(--line);border-radius:var(--r-xl);z-index:450;padding:8px;transform:translateX(calc(-100% - 16px));transition:transform .35s var(--ease-out),visibility .35s;visibility:hidden}
+  .sidebar.open{transform:none;visibility:visible;box-shadow:var(--shadow-dialog)}
+  .sidebar .f-card{border-radius:var(--r-lg)}
+  .filter-toggle{display:inline-flex}
+  .qv{grid-template-columns:1fr}
+  .qv-img{aspect-ratio:16/10}
+}
+@media (max-width:560px){.prod-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.toolbar{padding:8px 8px 8px 12px}}
+</style>
+</head>
+<body data-page="materials">
+
+<header class="page-header">
+  <div class="container">
+    <div>
+      <h1 class="page-title" id="page-title">Materials on our shelves</h1>
+      <p class="page-sub" id="page-sub">Counted live at the Bagumbong store. Order for delivery or free pickup.</p>
+    </div>
+    <a class="btn btn-accent" href="estimate.html">Not sure what to buy? Get an estimate</a>
+  </div>
+</header>
+
+<div class="container shop">
+  <aside class="sidebar" id="sidebar" aria-label="Filters">
+    <div class="f-card"><div class="f-body f-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="input" id="f-q" type="search" placeholder="Cement, PVC pipe, Boysen…" aria-label="Search products"/>
+    </div></div>
+    <div class="f-card"><div class="f-head">Category</div><div class="f-body" id="f-cats"></div></div>
+    <div class="f-card"><div class="f-head">Price Range (₱)</div><div class="f-body">
+      <div class="price-row"><input class="input" id="f-min" type="number" min="0" placeholder="Min"/><input class="input" id="f-max" type="number" min="0" placeholder="Max"/></div>
+    </div></div>
+    <div class="f-card"><div class="f-head">Availability</div><div class="f-body" id="f-avail">
+      <button class="chk on" data-v="all"><span><span class="box"></span>All items</span></button>
+      <button class="chk" data-v="in"><span><span class="box"></span>In stock</span></button>
+      <button class="chk" data-v="low"><span><span class="box"></span>Low stock</span></button>
+      <button class="chk" data-v="sale"><span><span class="box"></span>On sale</span></button>
+    </div></div>
+    <button class="btn btn-outline btn-block" id="f-clear">Clear all filters</button>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <button class="btn btn-outline btn-sm filter-toggle" id="filter-toggle">Filters</button>
+      <span class="result-count"><strong id="count">0</strong> products</span>
+      <div class="chips" id="chips"></div>
+      <select class="select" id="sort" aria-label="Sort products">
+        <option value="featured">In stock first</option>
+        <option value="price-asc">Lowest price</option>
+        <option value="price-desc">Highest price</option>
+        <option value="name">Name, A to Z</option>
+      </select>
+      <div class="view-seg"><button class="view-btn on" id="v-grid" aria-label="Grid view"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+      <button class="view-btn" id="v-list" aria-label="List view"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div>
+    </div>
+    <div class="prod-grid" id="grid"></div>
+    <div class="pager" id="pager"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="qv-modal" role="dialog" aria-modal="true" aria-labelledby="qv-name">
+  <div class="modal" style="width:720px">
+    <div class="modal-head"><div><div class="modal-title" id="qv-name"></div><div class="modal-sub" id="qv-sku"></div></div><button class="modal-x" data-close="qv-modal" aria-label="Close">✕</button></div>
+    <div class="modal-body"><div class="qv" id="qv-body"></div></div>
+  </div>
+</div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/photos.js"></script>
+<script src="assets/js/art.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+(function(){
+  const {Catalog, CAT_COLORS, peso, esc} = VH;
+  const PER = 12;
+  const params = new URLSearchParams(location.search);
+  const S = { q: params.get('q')||'', cat: +params.get('cat')||0, avail:'all', min:'', max:'', sort:'featured', view:'grid', page:1 };
+  const $ = id => document.getElementById(id);
+  $('f-q').value = S.q;
+
+  function renderCats(){
+    const prods = Catalog.products();
+    const cats = Catalog.categories();
+    $('f-cats').innerHTML = `<button class="chk${S.cat===0?' on':''}" data-c="0"><span><span class="box"></span>All categories</span><span class="cnt">${prods.length}</span></button>` +
+      cats.map(c=>`<button class="chk${S.cat===c.id?' on':''}" data-c="${c.id}"><span><span class="box"></span>${esc(c.name)}</span><span class="cnt">${prods.filter(p=>p.catId===c.id).length}</span></button>`).join('');
+  }
+
+  function filtered(){
+    const q = S.q.trim().toLowerCase();
+    const min = parseFloat(S.min), max = parseFloat(S.max);
+    let list = Catalog.products().filter(p=>{
+      if(S.cat && p.catId!==S.cat) return false;
+      if(q && ![p.name,p.sku,p.brand,Catalog.category(p.catId).name].join(' ').toLowerCase().includes(q)) return false;
+      if(!isNaN(min) && p.price<min) return false;
+      if(!isNaN(max) && p.price>max) return false;
+      const st = Catalog.stockStatus(p).key;
+      if(S.avail==='in' && st==='out') return false;
+      if(S.avail==='low' && st!=='low') return false;
+      if(S.avail==='sale' && !p.orig) return false;
+      return true;
+    });
+    const rank = p => (p.stock>0?0:1);
+    const sorters = { featured:(a,b)=>rank(a)-rank(b), 'price-asc':(a,b)=>a.price-b.price, 'price-desc':(a,b)=>b.price-a.price, name:(a,b)=>a.name.localeCompare(b.name) };
+    return list.sort(sorters[S.sort]);
+  }
+
+  function render(){
+    const list = filtered();
+    const pages = Math.max(1, Math.ceil(list.length/PER));
+    if(S.page>pages) S.page = 1;
+    const slice = list.slice((S.page-1)*PER, S.page*PER);
+    $('count').textContent = list.length;
+    const cat = S.cat ? Catalog.category(S.cat) : null;
+    $('page-title').textContent = cat ? cat.name : (S.q ? 'Results for “'+S.q+'”' : 'Materials on our shelves');
+    if(cat) $('page-sub').textContent = cat.desc;
+    const grid = $('grid');
+    grid.className = 'prod-grid' + (S.view==='list'?' list':'');
+    grid.innerHTML = slice.length ? slice.map(UI.productCard).join('') :
+      `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">${Art.cat(9)}</div><div class="empty-title">Nothing matches that</div><p>Try a shorter word or clear the filters. Can't find it? Call the store, not every item is online yet.</p></div>`;
+    // chips
+    const chips = [];
+    if(S.q) chips.push(['q','“'+S.q+'”']);
+    if(cat) chips.push(['cat',cat.name]);
+    if(S.avail!=='all') chips.push(['avail',{in:'In stock',low:'Low stock',sale:'On sale'}[S.avail]]);
+    if(S.min||S.max) chips.push(['price','₱'+(S.min||0)+' – '+(S.max?'₱'+S.max:'any')]);
+    $('chips').innerHTML = chips.map(([k,l])=>`<span class="chip">${esc(l)}<button data-chip="${k}" aria-label="Remove filter">✕</button></span>`).join('');
+    // pager
+    const pg = $('pager'); pg.innerHTML='';
+    if(pages>1){
+      pg.innerHTML = `<button class="pg" data-p="${S.page-1}" ${S.page===1?'disabled':''}>←</button>` +
+        Array.from({length:pages},(_,i)=>`<button class="pg${i+1===S.page?' on':''}" data-p="${i+1}">${i+1}</button>`).join('') +
+        `<button class="pg" data-p="${S.page+1}" ${S.page===pages?'disabled':''}>→</button>`;
+    }
+  }
+
+  function openQV(id){
+    const p = Catalog.product(id); if(!p) return;
+    const c = Catalog.category(p.catId); const st = Catalog.stockStatus(p);
+    $('qv-name').textContent = p.name;
+    $('qv-sku').textContent = c.name + ' · ' + (p.brand||'') + ' · ' + p.sku;
+    $('qv-body').innerHTML = `
+      <div class="qv-img" data-tile="${UI.tileOf(p.catId)}">${UI.photoOf(p)?`<img src="${esc(UI.photoOf(p))}" alt="" onerror="this.remove()"/>`:''}${Art.cat(p.catId)}</div>
+      <div>
+        <p class="qv-desc" style="margin-top:0">${esc(p.desc||'')}</p>
+        <dl class="qv-meta">
+          <dt>In stock</dt><dd style="color:${st.key==='out'?'var(--danger)':st.key==='low'?'#D97706':'var(--success)'};font-weight:700">${st.key==='out'?'Out of stock':p.stock+' '+esc(p.unit)+' available'}</dd>
+        </dl>
+        <div class="qv-price">${peso(p.price)} <small>/ ${esc(p.unit)}</small>${p.orig?` <small>was ${peso(p.orig)}</small>`:''}</div>
+        <div class="qv-buy">
+          <div class="qty-ctrl"><button class="qty-btn" data-qv="-1" aria-label="Decrease">−</button><input class="qty-num" id="qv-qty" type="number" value="1" min="1" max="${p.stock}" aria-label="Quantity"/><button class="qty-btn" data-qv="1" aria-label="Increase">+</button></div>
+          <button class="btn btn-primary" id="qv-add" ${st.key==='out'?'disabled':''}>Add to cart</button>
+          <span class="muted" id="qv-line" style="font-size:13px"></span>
+        </div>
+      </div>`;
+    const qty = $('qv-qty');
+    const upd = () => { const v = Math.max(1, Math.min(p.stock||1, +qty.value||1)); qty.value=v; $('qv-line').textContent = 'Total '+peso(v*p.price); UI.flash($('qv-line')); };
+    upd();
+    qty.oninput = upd;
+    $('qv-body').querySelectorAll('[data-qv]').forEach(b=>b.onclick=()=>{qty.value=(+qty.value||1)+(+b.dataset.qv);upd();});
+    $('qv-add').onclick = e=>UI.busy(e.currentTarget, ()=>{ const r = UI.addToCart(p.id, +qty.value||1); if(r.ok){ UI.closeModal('qv-modal'); render(); UI.popAdded(p.id); } }, 350);
+    UI.openModal('qv-modal');
+  }
+
+  // events
+  $('grid').addEventListener('click', e=>{
+    const add = e.target.closest('[data-add]');
+    if(add){ e.stopPropagation(); UI.addToCart(+add.dataset.add); render(); UI.popAdded(+add.dataset.add); return; }
+    const card = e.target.closest('.p-card'); if(card) openQV(+card.dataset.id);
+  });
+  $('grid').addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.classList.contains('p-card')) openQV(+e.target.dataset.id); });
+  $('f-cats').addEventListener('click', e=>{ const b=e.target.closest('[data-c]'); if(!b) return; S.cat=+b.dataset.c; S.page=1; renderCats(); render(); $('sidebar').classList.remove('open'); });
+  $('f-avail').addEventListener('click', e=>{ const b=e.target.closest('[data-v]'); if(!b) return; S.avail=b.dataset.v; S.page=1; $('f-avail').querySelectorAll('.chk').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+  $('f-q').addEventListener('input', e=>{ S.q=e.target.value; S.page=1; render(); });
+  $('f-min').addEventListener('input', e=>{ S.min=e.target.value; S.page=1; render(); });
+  $('f-max').addEventListener('input', e=>{ S.max=e.target.value; S.page=1; render(); });
+  $('sort').addEventListener('change', e=>{ S.sort=e.target.value; render(); });
+  $('v-grid').onclick=()=>{S.view='grid';$('v-grid').classList.add('on');$('v-list').classList.remove('on');render();};
+  $('v-list').onclick=()=>{S.view='list';$('v-list').classList.add('on');$('v-grid').classList.remove('on');render();};
+  $('pager').addEventListener('click', e=>{ const b=e.target.closest('[data-p]'); if(!b) return; S.page=+b.dataset.p; render(); window.scrollTo({top:0,behavior:'smooth'}); });
+  $('chips').addEventListener('click', e=>{ const b=e.target.closest('[data-chip]'); if(!b) return; const k=b.dataset.chip;
+    if(k==='q'){S.q='';$('f-q').value='';} if(k==='cat'){S.cat=0;renderCats();} if(k==='avail'){S.avail='all';$('f-avail').querySelectorAll('.chk').forEach(x=>x.classList.toggle('on',x.dataset.v==='all'));} if(k==='price'){S.min=S.max='';$('f-min').value=$('f-max').value='';}
+    render(); });
+  $('f-clear').onclick=()=>{ Object.assign(S,{q:'',cat:0,avail:'all',min:'',max:'',page:1}); $('f-q').value=$('f-min').value=$('f-max').value=''; $('f-avail').querySelectorAll('.chk').forEach(x=>x.classList.toggle('on',x.dataset.v==='all')); renderCats(); render(); };
+  $('filter-toggle').onclick=()=>$('sidebar').classList.toggle('open');
+  document.addEventListener('click', e=>{ if(window.innerWidth<=900 && $('sidebar').classList.contains('open') && !e.target.closest('#sidebar') && !e.target.closest('#filter-toggle')) $('sidebar').classList.remove('open'); });
+  // nav search on this page filters in place
+  const ns = document.querySelector('.nav-search');
+  if(ns) ns.addEventListener('submit', e=>{ e.preventDefault(); S.q = ns.q.value; $('f-q').value=S.q; S.page=1; render(); });
+
+  renderCats(); render();
+  if(params.get('view')) openQV(+params.get('view'));
+})();
+</script>
+</body>
+</html>
