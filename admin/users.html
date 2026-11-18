@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Manage Users | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+</head>
+<body>
+<main id="main">
+  <div class="stats" id="stats"></div>
+  <div class="toolbar">
+    <div class="search"><span></span><input class="input" id="q" placeholder="Search name, email, username…"/></div>
+    <select class="select auto" id="f-role"><option value="">All roles</option><option value="CUSTOMER">Customer</option><option value="CASHIER">Cashier</option><option value="INVENTORY_STAFF">Inventory Staff</option><option value="ADMIN">Admin</option></select>
+    <select class="select auto" id="f-status"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select>
+    <button class="btn btn-primary" id="add">Create staff account</button>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>User</th><th>Username</th><th>Role</th><th>Status</th><th>Contact</th><th>Orders</th><th>Joined</th><th style="width:150px">Actions</th></tr></thead>
+    <tbody id="tbody"></tbody></table></div></div>
+  <div class="card" style="margin-top:16px"><div class="card-head"><span class="card-title">Role permissions</span></div><div class="tbl-wrap"><table>
+    <thead><tr><th>Module</th><th>Admin</th><th>Cashier</th><th>Inventory Staff</th><th>Customer</th></tr></thead><tbody id="perm"></tbody></table></div></div>
+</main>
+
+<div class="modal-overlay" id="um"><div class="modal" style="width:560px">
+  <div class="modal-head"><span class="modal-title" id="um-t">Create staff account</span><button class="modal-x" data-close="um">✕</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div><label class="label" for="u-first">First name *</label><input class="input" id="u-first"/></div>
+    <div><label class="label" for="u-last">Last name *</label><input class="input" id="u-last"/></div>
+    <div><label class="label" for="u-email">Email *</label><input class="input" id="u-email" type="email"/></div>
+    <div><label class="label" for="u-user">Username *</label><input class="input" id="u-user"/></div>
+    <div><label class="label" for="u-phone">Contact number</label><input class="input" id="u-phone" placeholder="09XXXXXXXXX"/></div>
+    <div><label class="label" for="u-role">Role</label><select class="select" id="u-role"><option value="CASHIER">Cashier</option><option value="INVENTORY_STAFF">Inventory Staff</option><option value="ADMIN">Admin</option><option value="CUSTOMER">Customer</option></select></div>
+    <div><label class="label" for="u-status">Status</label><select class="select" id="u-status"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></div>
+    <div><label class="label" for="u-pw">Temporary password</label><input class="input" id="u-pw" type="text" autocomplete="new-password"/><div class="hint" id="pw-hint">At least 8 characters. Share it with the employee privately.</div></div>
+  </div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close="um">Cancel</button><button class="btn btn-primary" id="um-save">Save user</button></div>
+</div></div>
+
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('users','Manage Users'); if(!user) return;
+  const {Auth, Orders, ROLES, ACCESS, esc, fmtDate} = VH;
+  const $ = id => document.getElementById(id);
+  const RB = {ADMIN:'b-purple',CASHIER:'b-blue',INVENTORY_STAFF:'b-indigo',CUSTOMER:'b-gray'};
+  let editId = null;
+
+  function render(){
+    const us = Auth.users();
+    $('stats').innerHTML = `
+      <div class="stat"><div class="stat-l">All users</div><div class="stat-v">${us.length}</div></div>
+      <div class="stat blue"><div class="stat-l">Customers</div><div class="stat-v">${us.filter(u=>u.role==='CUSTOMER').length}</div></div>
+      <div class="stat purple"><div class="stat-l">Staff</div><div class="stat-v">${us.filter(u=>u.role!=='CUSTOMER').length}</div><div class="stat-s">Admin, cashier & inventory</div></div>
+      <div class="stat red"><div class="stat-l">Inactive</div><div class="stat-v">${us.filter(u=>u.status!=='ACTIVE').length}</div></div>`;
+    const q=$('q').value.trim().toLowerCase(), r=$('f-role').value, s=$('f-status').value;
+    const l = us.filter(u=>(!r||u.role===r)&&(!s||u.status===s)&&(!q||[u.first,u.last,u.email,u.username].join(' ').toLowerCase().includes(q)));
+    $('tbody').innerHTML = l.length ? l.map(u=>`<tr style="${u.status!=='ACTIVE'?'opacity:.6':''}">
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:12px">${esc(Auth.initials(u))}</div><div><b>${esc(Auth.fullName(u))}</b>${u.id===user.id?' <span class="badge b-yellow">You</span>':''}<div class="muted" style="font-size:12px">${esc(u.email)}</div></div></div></td>
+      <td><code>${esc(u.username)}</code></td><td><span class="badge ${RB[u.role]}">${ROLES[u.role]}</span></td>
+      <td><span class="badge ${u.status==='ACTIVE'?'b-green':'b-red'}">${u.status}</span></td><td class="muted">${esc(u.contact||'-')}</td>
+      <td>${u.role==='CUSTOMER'?Orders.byUser(u.id).length:'-'}</td><td class="muted" style="font-size:12.5px">${fmtDate(u.createdAt)}</td>
+      <td><button class="icon-btn" data-edit="${u.id}" title="Edit">Edit</button> <button class="icon-btn" data-reset="${u.id}" title="Reset password">Reset password</button> ${u.id!==user.id?`<button class="icon-btn ${u.status==='ACTIVE'?'del':''}" data-toggle="${u.id}">${u.status==='ACTIVE'?'Deactivate':'Reactivate'}</button>`:''}</td></tr>`).join('') : '<tr><td colspan="8" class="empty">No users match.</td></tr>';
+    const mods = [['dashboard','Dashboard'],['pos','Point of Sale'],['inventory','Inventory'],['orders','Orders, deliveries & replacements'],['reports','Reports'],['users','Manage users']];
+    const yes = '<span style="color:var(--success);font-weight:600">✓</span>', no = '<span class="muted">-</span>';
+    $('perm').innerHTML = mods.map(([k,l])=>`<tr><td><b>${l}</b></td>${['ADMIN','CASHIER','INVENTORY_STAFF','CUSTOMER'].map(r=>`<td>${ACCESS[r].includes(k)?yes:no}</td>`).join('')}</tr>`).join('') +
+      `<tr><td><b>Online store, cart, Estimate AI, own orders</b></td><td>${yes}</td><td>${yes}</td><td>${yes}</td><td>${yes}</td></tr>`;
+  }
+  ['q','f-role','f-status'].forEach(id=>$(id).addEventListener(id==='q'?'input':'change',render));
+
+  const genPw = ()=>'Vh@'+Math.random().toString(36).slice(2,8)+Math.floor(Math.random()*90+10);
+  function open(id){
+    editId = id||null; const u = id?Auth.users().find(x=>x.id===id):null;
+    $('um-t').textContent = u?'Edit user':'Create staff account';
+    $('u-first').value=u?u.first:''; $('u-last').value=u?u.last:''; $('u-email').value=u?u.email:''; $('u-user').value=u?u.username:'';
+    $('u-phone').value=u?u.contact||'':''; $('u-role').value=u?u.role:'CASHIER'; $('u-status').value=u?u.status:'ACTIVE';
+    $('u-pw').value = u?'':genPw(); $('pw-hint').textContent = u?'Leave blank to keep the current password.':'At least 8 characters. Share it with the employee privately.';
+    const self = u && u.id===user.id; $('u-role').disabled = self; $('u-status').disabled = self;
+    Admin.openModal('um');
+  }
+  $('add').onclick = ()=>open();
+  $('um-save').onclick = ()=>{
+    const us = Auth.users();
+    const d = {first:$('u-first').value.trim(), last:$('u-last').value.trim(), email:$('u-email').value.trim().toLowerCase(), username:$('u-user').value.trim().toLowerCase(), contact:$('u-phone').value.replace(/[\s-]/g,''), role:$('u-role').value, status:$('u-status').value};
+    const pw = $('u-pw').value;
+    if(!d.first||!d.last) return Admin.toast('First and last name are required.','danger');
+    if(!/^\S+@\S+\.\S+$/.test(d.email)) return Admin.toast('Enter a valid email.','danger');
+    if(!/^[a-z0-9._-]{3,}$/.test(d.username)) return Admin.toast('Username: 3+ letters, numbers, dot, dash or underscore.','danger');
+    if(d.contact && !/^(09|\+639)\d{9}$/.test(d.contact)) return Admin.toast('Enter a valid PH mobile number.','danger');
+    if(us.some(u=>u.id!==editId && u.email===d.email)) return Admin.toast('Email already in use.','danger');
+    if(us.some(u=>u.id!==editId && u.username===d.username)) return Admin.toast('Username already taken.','danger');
+    if((!editId || pw) && pw.length<8) return Admin.toast('Password must be at least 8 characters.','danger');
+    if(editId){
+      if(editId===user.id){ delete d.role; delete d.status; }
+      if(pw) d.password = pw;
+      Auth.update(editId, d); Admin.toast('User updated.','success');
+    } else {
+      us.push({id:Math.max(0,...us.map(u=>u.id))+1, ...d, password:pw, address:'', city:'', province:'', createdAt:new Date().toISOString()});
+      Auth.saveUsers(us); Admin.toast('Account created for '+d.first+'.','success');
+    }
+    Admin.closeModal('um'); render();
+  };
+  $('tbody').onclick = async e=>{
+    const ed=e.target.closest('[data-edit]'), rs=e.target.closest('[data-reset]'), tg=e.target.closest('[data-toggle]');
+    if(ed) open(+ed.dataset.edit);
+    if(rs){ const u=Auth.users().find(x=>x.id===+rs.dataset.reset); if(!await Admin.confirm('Reset password for '+Auth.fullName(u)+'?','A new temporary password will be generated and shown once.','Reset')) return;
+      const pw=genPw(); Auth.update(u.id,{password:pw}); await Admin.confirm('Temporary password','New password for '+u.username+': '+pw+'. Share it privately and ask them to change it.','Done'); }
+    if(tg){ const u=Auth.users().find(x=>x.id===+tg.dataset.toggle); const act=u.status==='ACTIVE';
+      if(act && u.role==='ADMIN' && Auth.users().filter(x=>x.role==='ADMIN'&&x.status==='ACTIVE').length<=1) return Admin.toast('Keep at least one active admin.','warn');
+      if(!await Admin.confirm((act?'Deactivate ':'Reactivate ')+Auth.fullName(u)+'?', act?'They will no longer be able to sign in.':'They will be able to sign in again.', act?'Deactivate':'Reactivate', act)) return;
+      Auth.update(u.id,{status:act?'INACTIVE':'ACTIVE'}); Admin.toast('Account '+(act?'deactivated':'reactivated')+'.'); render(); }
+  };
+  render();
+})();
+</script>
+</body>
+</html>

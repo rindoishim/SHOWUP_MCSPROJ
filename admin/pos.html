@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Point of Sale | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+<style>
+#main{padding:0;height:calc(100vh - var(--top));height:calc(100dvh - var(--top));display:flex;flex-direction:column;overflow:hidden}
+.ptabs{display:flex;gap:2px;padding:12px 20px 0;flex-shrink:0}
+.ptab{height:36px;padding:0 14px;border-radius:var(--r-pill);font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;border:none;background:none;display:flex;gap:7px;align-items:center;transition:background-color .15s,color .15s}
+.ptab:hover{background:var(--hover);color:var(--ink)}
+.ptab.on{background:var(--fill);color:var(--on-fill)}
+.view{flex:1;display:none;overflow:hidden;min-height:0}
+.view.on{display:flex}
+.prods{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px 16px 16px 20px;min-width:0}
+.filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+/* category row scrolls sideways and fades at the edge that has more */
+.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;flex-shrink:0;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{height:34px;padding:0 14px;border-radius:var(--r-pill);font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:background-color .15s,color .15s}
+.pill:hover{background:var(--hover);color:var(--ink)}
+.pill.on{background:var(--fill);color:var(--on-fill);border-color:transparent}
+.tiles-wrap{flex:1;overflow-y:auto;padding:2px 4px 4px 2px;margin:-2px -4px 0 -2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:10px}
+/* product tile: 14px corner */
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 13px;cursor:pointer;position:relative;text-align:left;display:flex;flex-direction:column;gap:2px;transition:border-color .15s,transform .2s var(--ease),box-shadow .2s;font-family:inherit;color:var(--ink);width:100%}
+.tile:hover{border-color:var(--line-2);transform:translateY(-1px);box-shadow:0 6px 16px -6px oklch(22% .02 255 / .14)}
+.tile:active{transform:scale(.98)}
+.tile:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.tile.inc{border-color:var(--accent-2);box-shadow:0 0 0 1px var(--accent-2)}
+.t-cat{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:2px}
+.t-cat i{width:10px;height:10px;border-radius:3px;background:var(--tile);box-shadow:inset 0 0 0 1px var(--line)}
+.t-name{font-size:14px;font-weight:500;line-height:1.3;color:var(--ink)}
+.t-sku{font-size:12px;color:var(--muted)}
+.t-price{font-size:19px;font-weight:600;letter-spacing:-.035em;color:var(--ink);margin-top:auto;padding-top:8px;font-variant-numeric:tabular-nums}
+.t-stock{font-size:12px;color:var(--muted)}
+.t-badge{position:absolute;top:10px;right:10px;font-size:11px;font-weight:500;height:20px;padding:0 8px;border-radius:var(--r-pill);display:flex;align-items:center;color:#fff}
+.tile-wrap{display:flex;flex-direction:column}
+.tile-wrap .tile{flex:1}
+/* in the sale: tile and bar share one 14px outline */
+.tile-wrap.inc{border-radius:var(--r-md);box-shadow:0 0 0 1.5px var(--accent-2);background:var(--paper)}
+.tile-wrap.inc .tile{border-color:transparent;box-shadow:none;border-radius:var(--r-md) var(--r-md) 0 0}
+.t-bar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;padding:4px;background:var(--accent-tint);border-radius:0 0 var(--r-md) var(--r-md)}
+/* bar buttons: 14px − 4px inset = 10px */
+.t-bar button{min-width:40px;height:34px;border:0;border-radius:var(--r-sm);background:var(--paper);font-size:18px;font-weight:500;cursor:pointer;color:var(--ink);transition:background-color .15s,color .15s}
+.t-bar button:hover{background:var(--accent);color:var(--on-accent)}
+.t-bar .t-minus.last{font-size:13px;color:var(--danger);padding:0 10px}
+.t-bar .t-minus.last:hover{background:var(--danger);color:#fff}
+.t-count{text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink)}
+/* the sale: a raised panel on the right */
+.cart{width:384px;margin:12px 12px 12px 0;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-xl);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.cart-h{padding:16px 16px 12px 18px;display:flex;justify-content:space-between;align-items:center}
+.cart-h b{font-size:18px;font-weight:600;letter-spacing:-.025em;color:var(--ink)}
+.cust{padding:0 16px 10px}
+.cust .input{min-height:38px}
+.items{flex:1;overflow-y:auto;padding:0 16px;border-top:1px solid var(--line)}
+.ci{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.ci-i{flex:1 1 100%;min-width:0}
+.ci-n{font-size:14px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ci-s{font-size:12px;color:var(--muted)}
+/* qty stepper: 12px track, 3px inset, so 9px buttons */
+.q{display:flex;align-items:center;gap:2px;padding:3px;border-radius:var(--r-md);background:var(--sunken);border:1px solid var(--line)}
+.q button{width:32px;height:32px;font-size:17px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:500;color:var(--ink);transition:background-color .15s}
+.q button:hover{background:var(--paper)}
+.q input{width:46px;height:32px;text-align:center;border:0;border-radius:9px;background:var(--paper);font-weight:600;font-size:14px;color:var(--ink);-moz-appearance:textfield;font-variant-numeric:tabular-nums}
+.q input::-webkit-inner-spin-button{-webkit-appearance:none}
+.ci-t{margin-left:auto;font-size:15px;font-weight:600;letter-spacing:-.02em;color:var(--ink);min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.ci-x{border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:500;padding:0 12px;height:32px;transition:background-color .15s,color .15s}
+.ci-x:hover{background:var(--danger-tint);color:var(--danger)}
+.cart-empty{text-align:center;padding:44px 16px;color:var(--muted);font-size:14px}
+.sum{border-top:1px solid var(--line);padding:12px 16px 8px}
+.sr{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.sr span:first-child{color:var(--muted)}
+.sr b{font-weight:500}
+.disc{display:flex;gap:6px;align-items:center}
+.disc select{height:30px;padding:0 28px 0 10px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23727985' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center/13px;appearance:none;-webkit-appearance:none;color:var(--ink);cursor:pointer}
+/* total band: 24px panel, 8px inset, so 16px corners */
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin:8px -8px 0;padding:12px 14px;border-radius:16px;background:var(--accent-grad);color:var(--on-accent)}
+.tot span{font-size:15px;font-weight:600;color:var(--on-accent)}
+.tot b{font-size:30px;font-weight:600;letter-spacing:-.05em;color:var(--on-accent);font-variant-numeric:tabular-nums}
+.pay{padding:8px 16px 16px}
+.pay-g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:10px;padding:4px;border-radius:var(--r-md);background:var(--sunken);border:1px solid var(--line)}
+.pb{height:34px;border:0;border-radius:var(--r-sm);background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-2);transition:background-color .15s,color .15s}
+.pb:hover{color:var(--ink)}
+.pb.on{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 1px 2px oklch(22% .02 255 / .06)}
+:root[data-theme="dark"] .pb.on{background:var(--hover-2)}
+.cash{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.cash input{font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.quick{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.quick button{flex:1;height:32px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);font-size:13px;font-weight:500;cursor:pointer;color:var(--ink-2);font-variant-numeric:tabular-nums;transition:background-color .15s,color .15s}
+.quick button:hover{background:var(--hover);color:var(--ink)}
+.process{width:100%;height:52px;background:var(--fill);color:var(--on-fill);border:none;border-radius:var(--r-pill);font-size:16px;font-weight:600;letter-spacing:-.01em;cursor:pointer;transition:opacity .15s,transform .15s var(--ease)}
+.process:hover{opacity:.9}
+.process:active{transform:scale(.98)}
+.process:disabled{background:var(--hover-2);color:var(--muted);cursor:not-allowed;transform:none}
+.tx{flex-direction:column;padding:16px 20px 20px;overflow-y:auto}
+/* receipt: printed paper, kept light in both themes */
+.rcpt{font-size:13px;color:oklch(22% .012 255);background:#fff;border-radius:var(--r-md);padding:16px}
+.rc-h{text-align:center;padding-bottom:12px;border-bottom:1px dashed oklch(22% .02 255 / .25);margin-bottom:10px}
+.rc-h h2{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.rc-h p{font-size:12px;color:oklch(48.5% .012 255);line-height:1.6}
+.rc-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px;margin-bottom:10px}
+.rc-meta span{color:oklch(48.5% .012 255)}
+.rc-i{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-variant-numeric:tabular-nums}
+.rc-i small{display:block;color:oklch(48.5% .012 255);font-size:11px}
+.rc-t{border-top:1px dashed oklch(22% .02 255 / .25);margin-top:8px;padding-top:8px}
+.rc-t div{display:flex;justify-content:space-between;padding:2px 0;font-variant-numeric:tabular-nums}
+.rc-grand{background:oklch(22% .012 255);color:#fff;border-radius:var(--r-sm);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+.rc-grand b{font-size:20px;font-weight:600;color:oklch(84% .165 86);font-variant-numeric:tabular-nums}
+.rc-f{text-align:center;font-size:11px;color:oklch(48.5% .012 255);border-top:1px dashed oklch(22% .02 255 / .25);padding-top:10px;margin-top:8px;line-height:1.6}
+@media print{body *{visibility:hidden}#print-area,#print-area *{visibility:visible}#print-area{position:fixed;inset:0;padding:20px;width:80mm}}
+@media (max-width:1100px){.cart{width:336px}}
+@media (max-width:760px){#main{height:auto;overflow:visible}.view.on{flex-direction:column;overflow:visible}.cart{width:auto;margin:0 12px 12px}.tiles-wrap{max-height:55vh;max-height:55dvh}}
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="ptabs">
+    <button class="ptab on" data-v="pos">Point of sale</button>
+    <button class="ptab" data-v="tx">Transactions</button>
+  </div>
+
+  <section class="view on" id="v-pos">
+    <div class="prods">
+      <div class="filters">
+        <div class="search"><span></span><input class="input" id="q" placeholder="Search name or scan/enter SKU, then press Enter…" autocomplete="off"/></div>
+        <select class="select auto" id="sort"><option value="name">Sort: Name</option><option value="price-asc">Price ↑</option><option value="price-desc">Price ↓</option><option value="stock">Stock ↑</option></select>
+      </div>
+      <div class="pills" id="pills"></div>
+      <div class="tiles-wrap"><div class="tiles" id="tiles"></div></div>
+    </div>
+    <aside class="cart">
+      <div class="cart-h"><div><b>Current sale</b><div class="muted" style="font-size:12px" id="cart-meta">0 items</div></div>
+        <div style="display:flex;gap:6px"><button class="icon-btn" id="hold" title="Hold sale">Hold</button><button class="icon-btn" id="recall" title="Recall held sale">Recall <span id="held-n" style="font-size:10px;font-weight:600;margin-left:1px"></span></button><button class="icon-btn del" id="clear" title="Clear sale">Clear</button></div></div>
+      <div class="cust"><input class="input" id="cust" placeholder="Customer name (optional)"/></div>
+      <div class="items" id="items"></div>
+      <div class="sum">
+        <div class="sr"><span>Subtotal</span><b id="s-sub">₱0.00</b></div>
+        <div class="sr"><span>Discount</span><div class="disc"><select id="disc"><option value="0">None</option><option value="5">5%</option><option value="10">10%</option><option value="20">20% Senior/PWD</option></select><b id="s-disc" style="color:var(--danger)">-₱0.00</b></div></div>
+        <div class="sr"><span>VAT (12%)</span><b id="s-vat">₱0.00</b></div>
+        <div class="tot"><span>Total</span><b id="s-total">₱0.00</b></div>
+      </div>
+      <div class="pay">
+        <div class="pay-g"><button class="pb on" data-p="cash">Cash</button><button class="pb" data-p="gcash">GCash</button><button class="pb" data-p="maya">Maya</button></div>
+        <div id="cash-box">
+          <div class="cash"><div><label class="label">Cash tendered</label><input class="input" id="tendered" type="number" min="0" placeholder="0.00"/></div><div><label class="label">Change</label><input class="input" id="change" readonly style="background:var(--secondary);color:var(--success)" value="₱0.00"/></div></div>
+          <div class="quick" id="quick"></div>
+        </div>
+        <div id="ref-box" style="display:none;margin-bottom:8px"><label class="label">E-wallet reference no.</label><input class="input" id="payref" placeholder="13-digit reference number" inputmode="numeric"/></div>
+        <button class="process" id="process" disabled>Process payment</button>
+      </div>
+    </aside>
+  </section>
+
+  <section class="view tx" id="v-tx">
+    <div class="stats" id="tx-stats"></div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">In-store transactions</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="input" id="tx-q" placeholder="Search ref # or customer…" style="width:220px"/>
+        <select class="select auto" id="tx-pay"><option value="">All methods</option><option value="cash">Cash</option><option value="gcash">GCash</option><option value="maya">Maya</option></select>
+        <select class="select auto" id="tx-range"><option value="1">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option><option value="0">All time</option></select>
+        <button class="btn btn-ghost btn-sm" id="tx-csv">Export CSV</button></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Ref #</th><th>Date & time</th><th>Customer</th><th>Items</th><th class="r">Discount</th><th class="r">Total</th><th>Method</th><th>Cashier</th><th></th></tr></thead><tbody id="tx-body"></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="rc-modal"><div class="modal" style="width:380px">
+  <div class="modal-head"><span class="modal-title">Receipt</span><button class="modal-x" data-close="rc-modal">✕</button></div>
+  <div class="modal-body"><div class="rcpt" id="print-area"></div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" id="rc-print">Print</button><button class="btn btn-primary" data-close="rc-modal" id="rc-done">Done</button></div>
+</div></div>
+
+<div class="modal-overlay" id="held-modal"><div class="modal" style="width:440px">
+  <div class="modal-head"><span class="modal-title">Held sales</span><button class="modal-x" data-close="held-modal">✕</button></div>
+  <div class="modal-body" id="held-list"></div>
+</div></div>
+
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('pos','Point of Sale'); if(!user) return;
+  const {Catalog, Sales, Auth, CAT_COLORS, RULES, PAY_LABEL, peso, pesoShort, esc, fmtDateTime, downloadCSV} = VH;
+  const $ = id => document.getElementById(id);
+  let cart = [], cat = 0, pay = 'cash';
+  const cashier = Auth.fullName(user);
+
+  /* tabs */
+  document.querySelectorAll('.ptab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.ptab').forEach(x=>x.classList.toggle('on',x===t)); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t.dataset.v)); if(t.dataset.v==='tx') renderTx(); else renderTiles(); });
+
+  function renderPills(){
+    const cats = Catalog.categories();
+    $('pills').innerHTML = `<button class="pill${cat===0?' on':''}" data-c="0">All</button>`+cats.map(c=>`<button class="pill${cat===c.id?' on':''}" data-c="${c.id}">${esc(c.name)}</button>`).join(''); Admin.fadeRow($('pills'));
+  }
+  $('pills').onclick = e=>{ const b=e.target.closest('[data-c]'); if(!b) return; cat=+b.dataset.c; renderPills(); renderTiles(); };
+
+  function list(){
+    const q = $('q').value.trim().toLowerCase(); const s=$('sort').value;
+    const l = Catalog.products().filter(p=>(!cat||p.catId===cat) && (!q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)));
+    const so = {name:(a,b)=>a.name.localeCompare(b.name),'price-asc':(a,b)=>a.price-b.price,'price-desc':(a,b)=>b.price-a.price,stock:(a,b)=>a.stock-b.stock};
+    return l.sort(so[s]);
+  }
+  function renderTiles(){
+    $('tiles').innerHTML = list().map(p=>{
+      const c = Catalog.category(p.catId); const inc = cart.find(x=>x.id===p.id); const st = Catalog.stockStatus(p);
+      // the tile adds one; once the item is in the sale, a bar under it lowers or removes it
+      return `<div class="tile-wrap${inc?' inc':''}">
+        <button class="tile${inc?' inc':''}" data-id="${p.id}" ${st.key==='out'?'disabled':''} aria-label="Add one ${esc(p.name)}">
+        ${st.key==='out'?'<span class="t-badge" style="background:var(--danger)">Out</span>':st.key==='low'?'<span class="t-badge" style="background:var(--warn)">Low</span>':''}
+        <span class="t-cat"><i data-tile="${Admin.tileOf(c.id)}" aria-hidden="true"></i>${esc(c.name)}</span>
+        <span class="t-name">${esc(p.name)}</span><span class="t-sku">${esc(p.sku)}</span>
+        <span class="t-price">${peso(p.price)}</span><span class="t-stock">${p.stock} ${esc(p.unit)} in stock</span></button>
+        ${inc?`<div class="t-bar">
+          <button type="button" class="t-minus${inc.qty===1?' last':''}" data-less="${p.id}" aria-label="${inc.qty===1?'Remove':'One less'} ${esc(p.name)}">${inc.qty===1?'Remove':'−'}</button>
+          <span class="t-count" aria-live="polite">${inc.qty} in sale</span>
+          <button type="button" class="t-plus" data-more="${p.id}" aria-label="One more ${esc(p.name)}">+</button></div>`:''}
+      </div>`;
+    }).join('') || '<div class="empty" style="grid-column:1/-1">No products match.</div>';
+  }
+  $('tiles').onclick = e=>{
+    const less=e.target.closest('[data-less]'); if(less){ const id=+less.dataset.less; const it=cart.find(x=>x.id===id); if(it) setQty(id, it.qty-1); return; }
+    const more=e.target.closest('[data-more]'); if(more){ add(+more.dataset.more); return; }
+    const t=e.target.closest('.tile'); if(t) add(+t.dataset.id);
+  };
+  $('q').oninput = renderTiles; $('sort').onchange = renderTiles;
+  $('q').onkeydown = e=>{ if(e.key!=='Enter') return; const v=$('q').value.trim().toUpperCase(); const p=Catalog.bySku(v) || (list().length===1?list()[0]:null); if(p){ add(p.id); $('q').value=''; renderTiles(); } else Admin.toast('No product with SKU '+v,'warn'); };
+
+  function add(id, n){
+    const p = Catalog.product(id); if(!p||p.stock<=0) return;
+    const ex = cart.find(x=>x.id===id); const want = (ex?ex.qty:0)+(n||1);
+    if(want>p.stock){ Admin.toast('Only '+p.stock+' '+p.unit+' in stock.','warn'); return; }
+    if(ex) ex.qty=want; else cart.push({id,qty:want});
+    renderCart(); renderTiles(); const tl=document.querySelector('.tile[data-id="'+id+'"]'); if(tl){ tl.classList.add('just-added'); } const st=document.getElementById('s-total').parentElement; st.classList.remove('flash'); void st.offsetWidth; st.classList.add('flash');
+  }
+  function setQty(id, v){
+    const p = Catalog.product(id); v = Math.floor(v)||0;
+    if(v>p.stock){ v=p.stock; Admin.toast('Only '+p.stock+' '+p.unit+' in stock.','warn'); }
+    if(v<=0) cart = cart.filter(x=>x.id!==id); else cart.find(x=>x.id===id).qty=v;
+    renderCart(); renderTiles();
+  }
+  function totals(){
+    const lines = cart.map(c=>{ const p=Catalog.product(c.id); return {...p, qty:c.qty, line:p.price*c.qty}; });
+    const sub = lines.reduce((a,l)=>a+l.line,0); const pct = +$('disc').value; const disc = sub*pct/100;
+    const vat = (sub-disc)*RULES.VAT; return {lines, sub, pct, disc, vat, total: sub-disc+vat};
+  }
+  function renderCart(){
+    const t = totals();
+    $('items').innerHTML = t.lines.length ? t.lines.map(l=>`<div class="ci"><div class="ci-i"><div class="ci-n" title="${esc(l.name)}">${esc(l.name)}</div><div class="ci-s">${peso(l.price)} / ${esc(l.unit)}</div></div>
+      <div class="q"><button type="button" data-d="-1" data-id="${l.id}" aria-label="One less ${esc(l.name)}">−</button><input type="number" inputmode="numeric" min="1" max="${l.stock}" value="${l.qty}" data-set="${l.id}" aria-label="Quantity of ${esc(l.name)}"/><button type="button" data-d="1" data-id="${l.id}" aria-label="One more ${esc(l.name)}">+</button></div>
+      <div class="ci-t" data-lt="${l.id}">${peso(l.line)}</div><button class="ci-x" data-rm="${l.id}" aria-label="Remove ${esc(l.name)}">Remove</button></div>`).join('')
+      : '<div class="cart-empty">Tap a product or scan a SKU to start a sale.</div>';
+    renderSummary();
+  }
+  /* totals only, never rebuilds the item rows, so a click on − / + is never lost */
+  function renderSummary(){
+    const t = totals();
+    const units = t.lines.reduce((a,l)=>a+l.qty,0);
+    $('cart-meta').textContent = t.lines.length+' line'+(t.lines.length!==1?'s':'')+' · '+units+' units';
+    $('s-sub').textContent = peso(t.sub); $('s-disc').textContent = '-'+peso(t.disc); $('s-vat').textContent = peso(t.vat); $('s-total').textContent = peso(t.total);
+    const q = [Math.ceil(t.total), ...[100,500,1000,5000].map(n=>Math.ceil(t.total/n)*n)].filter((v,i,a)=>v>0&&a.indexOf(v)===i).slice(0,4);
+    $('quick').innerHTML = t.total ? q.map(v=>`<button data-cash="${v}">${v===Math.ceil(t.total)?'Exact':pesoShort(v)}</button>`).join('') : '';
+    $('process').disabled = !t.lines.length;
+    updChange();
+  }
+  $('items').onclick = e=>{
+    const d=e.target.closest('[data-d]');
+    if(d){ const id=+d.dataset.id; const it=cart.find(x=>x.id===id); if(!it) return;
+      // read the box, not the stored value, so a number typed just before clicking counts
+      const inp=$('items').querySelector(`[data-set="${id}"]`); const typed=Math.floor(+inp.value);
+      const base = typed>0 ? typed : it.qty;
+      setQty(id, base+(+d.dataset.d)); return; }
+    const r=e.target.closest('[data-rm]'); if(r) setQty(+r.dataset.rm,0);
+  };
+  // typing updates the line and totals live, without redrawing the rows
+  $('items').oninput = e=>{
+    const s=e.target.closest('[data-set]'); if(!s) return;
+    const id=+s.dataset.set, it=cart.find(x=>x.id===id), p=Catalog.product(id); const v=Math.floor(+s.value);
+    if(!it || !(v>0)) return;
+    it.qty = Math.min(v, p.stock);
+    const lt=$('items').querySelector(`[data-lt="${id}"]`); if(lt) lt.textContent = peso(p.price*it.qty);
+    renderSummary();
+  };
+  // leaving the box tidies the value (stock limit, empty or zero removes the line)
+  $('items').onchange = e=>{
+    const s=e.target.closest('[data-set]'); if(!s) return;
+    const id=+s.dataset.set, it=cart.find(x=>x.id===id), p=Catalog.product(id); let v=Math.floor(+s.value);
+    if(!it) return;
+    if(!(v>0)){ // an empty box restores the last good amount instead of silently removing the line
+      s.value = it.qty; return; }
+    if(v>p.stock){ v=p.stock; Admin.toast('Only '+p.stock+' '+p.unit+' in stock.','warn'); }
+    it.qty=v; s.value=v;
+    const lt=$('items').querySelector(`[data-lt="${id}"]`); if(lt) lt.textContent = peso(p.price*v);
+    renderSummary(); renderTiles();
+  };
+  $('items').addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.matches('[data-set]')) e.target.blur(); });
+  $('disc').onchange = renderCart;
+  $('quick').onclick = e=>{ const b=e.target.closest('[data-cash]'); if(b){ $('tendered').value=b.dataset.cash; updChange(); } };
+  function updChange(){ const t=totals().total; const ten=+$('tendered').value||0; $('change').value = peso(Math.max(0,ten-t)); $('change').style.color = ten && ten<t ? 'var(--danger)' : 'var(--success)'; }
+  $('tendered').oninput = updChange;
+  document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{ pay=b.dataset.p; document.querySelectorAll('.pb').forEach(x=>x.classList.toggle('on',x===b)); $('cash-box').style.display=pay==='cash'?'block':'none'; $('ref-box').style.display=pay==='cash'?'none':'block'; });
+
+  $('clear').onclick = async ()=>{ if(!cart.length) return; if(await Admin.confirm('Clear this sale?','All items will be removed from the current sale.','Clear',true)){ reset(); } };
+  function reset(){ cart=[]; $('cust').value=''; $('tendered').value=''; $('payref').value=''; $('disc').value='0'; renderCart(); renderTiles(); }
+
+  /* hold / recall */
+  function heldCount(){ const n=Sales.held().length; $('held-n').textContent = n||''; }
+  $('hold').onclick = ()=>{ if(!cart.length) return Admin.toast('Nothing to hold.','warn'); const h=Sales.held(); h.push({at:new Date().toISOString(),customer:$('cust').value||'Walk-in',cart,disc:$('disc').value,by:cashier}); Sales.saveHeld(h); reset(); heldCount(); Admin.toast('Sale held. Recall it with .'); };
+  $('recall').onclick = ()=>{
+    const h = Sales.held();
+    $('held-list').innerHTML = h.length ? h.map((x,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="flex:1"><b>${esc(x.customer)}</b><div class="muted" style="font-size:12px">${x.cart.length} lines · held ${fmtDateTime(x.at)} by ${esc(x.by)}</div></div><button class="btn btn-primary btn-sm" data-recall="${i}">Recall</button><button class="icon-btn del" data-drop="${i}">Remove</button></div>`).join('') : '<div class="empty"><div class="ic"></div>No held sales.</div>';
+    Admin.openModal('held-modal');
+  };
+  $('held-list').onclick = e=>{
+    const r=e.target.closest('[data-recall]'), d=e.target.closest('[data-drop]'); const h=Sales.held();
+    if(r){ if(cart.length) return Admin.toast('Finish or hold the current sale first.','warn'); const x=h.splice(+r.dataset.recall,1)[0]; Sales.saveHeld(h);
+      cart = x.cart.filter(c=>{ const p=Catalog.product(c.id); if(!p||p.stock<=0) return false; c.qty=Math.min(c.qty,p.stock); return true; });
+      $('cust').value = x.customer==='Walk-in'?'':x.customer; $('disc').value=x.disc||'0'; renderCart(); renderTiles(); heldCount(); Admin.closeModal('held-modal'); }
+    if(d){ h.splice(+d.dataset.drop,1); Sales.saveHeld(h); heldCount(); $('recall').click(); }
+  };
+
+  /* process */
+  $('process').onclick = e=>{ const btn = e.currentTarget;
+    const t = totals(); if(!t.lines.length) return;
+    for(const l of t.lines){ const p=Catalog.product(l.id); if(l.qty>p.stock) return Admin.toast(l.name+': only '+p.stock+' left.','danger'); }
+    let tendered = t.total, ref = '';
+    if(pay==='cash'){ tendered = +$('tendered').value||0; if(tendered < t.total-0.005) { $('tendered').focus(); return Admin.toast('Insufficient cash tendered.','danger'); } }
+    else { ref = $('payref').value.trim(); if(!/^\d{6,20}$/.test(ref)){ $('payref').focus(); return Admin.toast('Enter the '+PAY_LABEL[pay]+' reference number.','danger'); } }
+    btn.classList.add('is-loading'); setTimeout(()=>{ btn.classList.remove('is-loading');
+    const tx = Sales.record({ customer:$('cust').value.trim()||'Walk-in', items:t.lines.map(l=>({id:l.id,sku:l.sku,name:l.name,unit:l.unit,price:l.price,qty:l.qty,line:l.line})),
+      subtotal:t.sub, discPct:t.pct, discount:t.disc, vat:t.vat, total:t.total, payMethod:pay, tendered, payRef:ref, cashier });
+    showReceipt(tx); reset(); todayChips(); Admin.toast('Payment recorded: '+tx.ref,'success'); }, 500);
+  };
+
+  function receiptHtml(tx){
+    const S = RULES.STORE; const change = tx.payMethod==='cash' ? tx.tendered - tx.total : 0;
+    return `<div class="rc-h"><h2>VREYMAR HARDWARE</h2><p>${esc(S.address)}<br>${esc(S.phone)} · VAT Reg. TIN 000-000-000-000</p></div>
+      <div class="rc-meta"><span>Receipt #</span><b>${tx.ref}</b><span>Date</span><b>${fmtDateTime(tx.at)}</b><span>Cashier</span><b>${esc(tx.cashier)}</b><span>Customer</span><b>${esc(tx.customer)}</b></div>
+      ${tx.items.map(i=>`<div class="rc-i"><div>${esc(i.name)}<small>${i.qty} × ${peso(i.price)}</small></div><b>${peso(i.line)}</b></div>`).join('')}
+      <div class="rc-t"><div><span>Subtotal</span><span>${peso(tx.subtotal)}</span></div>
+      ${tx.discount?`<div style="color:var(--danger)"><span>Discount (${tx.discPct}%)</span><span>-${peso(tx.discount)}</span></div>`:''}
+      <div><span>VAT (12%)</span><span>${peso(tx.vat)}</span></div></div>
+      <div class="rc-grand"><span style="font-weight:600;">Total</span><b>${peso(tx.total)}</b></div>
+      <div class="rc-t" style="border:none;margin:0;padding:0"><div><span>${PAY_LABEL[tx.payMethod]}${tx.payRef?' · Ref '+esc(tx.payRef):''}</span><span>${peso(tx.tendered)}</span></div>
+      ${change>0?`<div><span>Change</span><b style="color:var(--success)">${peso(change)}</b></div>`:''}</div>
+      <div class="rc-f">Thank you for shopping at Vreymar Hardware!<br>Keep this receipt for returns within 7 days.</div>`;
+  }
+  function showReceipt(tx){ $('print-area').innerHTML = receiptHtml(tx); Admin.openModal('rc-modal'); }
+  $('rc-print').onclick = ()=>window.print();
+
+  /* transactions */
+  function txList(){
+    const q=$('tx-q').value.trim().toLowerCase(), pm=$('tx-pay').value, days=+$('tx-range').value;
+    const from = new Date(); from.setHours(0,0,0,0); from.setDate(from.getDate()-(days?days-1:36500));
+    return Sales.all().filter(t=>new Date(t.at)>=from && (!pm||t.payMethod===pm) && (!q || t.ref.toLowerCase().includes(q) || (t.customer||'').toLowerCase().includes(q))).sort((a,b)=>new Date(b.at)-new Date(a.at));
+  }
+  function renderTx(){
+    const l = txList(); const rev = l.reduce((a,t)=>a+t.total,0); const units = l.reduce((a,t)=>a+t.items.reduce((b,i)=>b+i.qty,0),0);
+    $('tx-stats').innerHTML = `<div class="stat"><div class="stat-l">Transactions</div><div class="stat-v">${l.length}</div></div><div class="stat blue"><div class="stat-l">Revenue</div><div class="stat-v">${pesoShort(rev)}</div></div><div class="stat green"><div class="stat-l">Avg. sale</div><div class="stat-v">${pesoShort(l.length?rev/l.length:0)}</div></div><div class="stat purple"><div class="stat-l">Units sold</div><div class="stat-v">${units.toLocaleString()}</div></div>`;
+    const PB = {cash:'b-green',gcash:'b-blue',maya:'b-purple'};
+    $('tx-body').innerHTML = l.length ? l.map(t=>`<tr><td><code>${t.ref}</code></td><td class="muted" style="font-size:12.5px;white-space:nowrap">${fmtDateTime(t.at)}</td><td>${esc(t.customer)}</td><td>${t.items.length}</td><td class="r">${t.discPct?'-'+t.discPct+'%':'-'}</td><td class="r"><b>${peso(t.total)}</b></td><td><span class="badge ${PB[t.payMethod]||'b-gray'}">${PAY_LABEL[t.payMethod]}</span></td><td class="muted">${esc(t.cashier)}</td><td><button class="icon-btn" data-rc="${t.ref}" title="View receipt">Receipt</button></td></tr>`).join('') : '<tr><td colspan="9" class="empty">No transactions in this range.</td></tr>';
+  }
+  ['tx-q','tx-pay','tx-range'].forEach(id=>$(id).addEventListener(id==='tx-q'?'input':'change', renderTx));
+  $('tx-body').onclick = e=>{ const b=e.target.closest('[data-rc]'); if(b) showReceipt(Sales.all().find(t=>t.ref===b.dataset.rc)); };
+  $('tx-csv').onclick = ()=>{ const l=txList(); downloadCSV('vreymar-transactions-'+new Date().toISOString().slice(0,10)+'.csv', [['Ref','Date','Customer','Items','Subtotal','Discount','VAT','Total','Method','Reference','Cashier'], ...l.map(t=>[t.ref,fmtDateTime(t.at),t.customer,t.items.map(i=>i.qty+'x '+i.name).join('; '),t.subtotal.toFixed(2),(t.discount||0).toFixed(2),t.vat.toFixed(2),t.total.toFixed(2),PAY_LABEL[t.payMethod],t.payRef||'',t.cashier])]); Admin.toast('Exported '+l.length+' transactions.','success'); };
+
+  function todayChips(){
+    const todayTx = Sales.all().filter(t=>new Date(t.at).toDateString()===new Date().toDateString());
+    Admin.topChips(`<span class="chip">${todayTx.length} sales today</span><span class="chip">${pesoShort(todayTx.reduce((a,t)=>a+t.total,0))}</span>`);
+  }
+  todayChips(); renderPills(); renderTiles(); renderCart(); heldCount();
+  $('q').focus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+<style>
+.hello{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.hello h1{font-size:30px;font-weight:600;letter-spacing:-.04em;color:var(--ink);line-height:1.05}
+.hello p{font-size:13.5px;color:var(--text-muted);margin-top:4px}
+.grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.chart{display:flex;align-items:flex-end;gap:10px;height:200px;padding:10px 4px 0}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.col-bars{width:100%;display:flex;flex-direction:column-reverse;border-radius:5px 5px 0 0;overflow:hidden;min-height:2px}
+.col-bars i{display:block;width:100%}
+.col-v{font-size:11.5px;font-weight:700;color:var(--text-muted);white-space:nowrap}
+.col-d{font-size:11px;color:var(--text-muted);font-weight:600}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--text-muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.li:last-child{border:none}
+.li .grow{flex:1;min-width:0}
+.li b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qa{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.qa a{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:var(--r-md);text-decoration:none;color:var(--text);font-weight:600;font-size:13.5px;background:var(--paper);transition:all .15s}
+.qa a:hover{border-color:var(--line-2);background:var(--sunken)}
+.qa span{font-size:22px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="hello"><div><h1 id="hello"></h1><p id="today"></p></div><div class="qa" id="qa" style="min-width:min(100%,520px)"></div></div>
+  <div class="stats" id="stats"></div>
+  <div class="grid">
+    <div class="card"><div class="card-head"><span class="card-title">Sales, last 7 days</span><div class="legend"><span><i style="background:var(--primary)"></i>In-store (POS)</span><span><i style="background:var(--accent)"></i>Online</span></div></div><div class="card-body"><div class="chart" id="chart"></div></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Low & out of stock</span><a class="btn btn-ghost btn-sm" href="inventory.html#restock" id="restock-link">Restock</a></div><div class="card-body" id="low" style="max-height:268px;overflow-y:auto"></div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="card-head"><span class="card-title">Recent online orders</span><a class="btn btn-ghost btn-sm" href="orders.html" id="orders-link">Manage orders</a></div><div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Customer</th><th>Delivery</th><th>Status</th><th class="r">Total</th></tr></thead><tbody id="recent"></tbody></table></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Upcoming deliveries</span></div><div class="card-body" id="deliv"></div></div>
+  </div>
+</main>
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('dashboard','Dashboard'); if(!user) return;
+  const {Reports, Orders, Sales, Catalog, Replacements, Auth, ORDER_LABEL, peso, pesoShort, esc, fmtDate, fmtLongDate} = VH;
+  const $ = id => document.getElementById(id);
+  const can = m => Auth.can(user,m);
+  const h = new Date().getHours();
+  $('hello').textContent = (h<12?'Good morning':h<18?'Good afternoon':'Good evening')+', '+user.first;
+  $('today').textContent = new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+' · '+VH.ROLES[user.role];
+
+  $('qa').innerHTML = [
+    can('pos')&&['pos.html','','New sale'],
+    can('orders')&&['orders.html','','Process orders'],
+    can('inventory')&&['inventory.html','','Manage stock'],
+    can('reports')&&['reports.html','','View reports'],
+    can('users')&&['users.html','','Manage users']
+  ].filter(Boolean).map(([h,i,l])=>`<a href="${h}"><span>${i}</span>${l}</a>`).join('');
+  if(!can('inventory')) $('restock-link').style.display='none';
+  if(!can('orders')) $('orders-link').style.display='none';
+
+  const sales = Reports.sales();
+  const dayKey = d => { const x=new Date(d); return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate(); };
+  const todayK = dayKey(new Date());
+  const todays = sales.filter(s=>dayKey(s.at)===todayK);
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-6); weekAgo.setHours(0,0,0,0);
+  const week = sales.filter(s=>new Date(s.at)>=weekAgo);
+  const products = Catalog.products();
+  const low = products.filter(p=>p.stock<=p.threshold).sort((a,b)=>a.stock-b.stock);
+  const pending = Orders.all().filter(o=>o.status==='pending').length;
+  const reps = Replacements.all().filter(r=>r.status==='pending').length;
+
+  $('stats').innerHTML = `
+    <div class="stat"><div class="stat-ic"></div><div class="stat-l">Today's sales</div><div class="stat-v">${pesoShort(todays.reduce((a,s)=>a+s.total,0))}</div><div class="stat-s">${todays.length} transaction${todays.length!==1?'s':''}</div></div>
+    <div class="stat blue"><div class="stat-ic"></div><div class="stat-l">Last 7 days</div><div class="stat-v">${pesoShort(week.reduce((a,s)=>a+s.total,0))}</div><div class="stat-s">${week.length} sales · avg ${pesoShort(week.length?week.reduce((a,s)=>a+s.total,0)/week.length:0)}</div></div>
+    <div class="stat purple"><div class="stat-ic"></div><div class="stat-l">Pending orders</div><div class="stat-v">${pending}</div><div class="stat-s">${reps} replacement request${reps!==1?'s':''} waiting</div></div>
+    <div class="stat red"><div class="stat-ic"></div><div class="stat-l">Low / out of stock</div><div class="stat-v">${low.length}</div><div class="stat-s">${low.filter(p=>p.stock===0).length} out of stock</div></div>
+    <div class="stat green"><div class="stat-ic"></div><div class="stat-l">Inventory value</div><div class="stat-v">${pesoShort(products.reduce((a,p)=>a+p.cost*p.stock,0))}</div><div class="stat-s">${products.length} products at cost</div></div>`;
+
+  // chart
+  const days = [];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d); }
+  const data = days.map(d=>{ const k=dayKey(d); const s=sales.filter(x=>dayKey(x.at)===k); return {d, pos:s.filter(x=>x.channel==='In-store').reduce((a,x)=>a+x.total,0), on:s.filter(x=>x.channel==='Online').reduce((a,x)=>a+x.total,0)}; });
+  const max = Math.max(1,...data.map(x=>x.pos+x.on));
+  $('chart').innerHTML = data.map(x=>{ const t=x.pos+x.on; return `<div class="col" title="${fmtDate(x.d)}: ${peso(t)}"><div class="col-v">${t?pesoShort(t):''}</div>
+    <div class="col-bars" style="height:${Math.max(1,t/max*150)}px"><i style="height:${t?x.pos/t*100:0}%;background:var(--primary)"></i><i style="height:${t?x.on/t*100:0}%;background:var(--accent)"></i></div>
+    <div class="col-d">${x.d.toLocaleDateString('en-PH',{weekday:'short'})}</div></div>`; }).join('');
+
+  $('low').innerHTML = low.length ? low.slice(0,10).map(p=>`<div class="li"><div class="grow"><b>${esc(p.name)}</b><span class="muted">${esc(p.sku)} · min ${p.threshold}</span></div><span class="badge ${p.stock===0?'b-red':'b-yellow'}">${p.stock} ${esc(p.unit)}</span></div>`).join('') : '<div class="empty"><div class="ic">✅</div>All products are well stocked.</div>';
+
+  const orders = Orders.all().slice().sort((a,b)=>new Date(b.placedAt)-new Date(a.placedAt));
+  const SB = {pending:'b-yellow',confirmed:'b-blue',preparing:'b-indigo',out:'b-orange',delivered:'b-green',cancelled:'b-gray'};
+  $('recent').innerHTML = orders.slice(0,6).map(o=>`<tr><td><code>${o.ref}</code></td><td>${esc(o.customer)}</td><td class="muted" style="font-size:12.5px">${o.schedule?fmtDate(o.schedule.date+'T00:00:00')+' · '+esc(o.schedule.slot):'-'}</td><td><span class="badge ${SB[o.status]}">${ORDER_LABEL[o.status]}</span></td><td class="r"><b>${peso(o.total)}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No online orders yet.</td></tr>';
+
+  const today0 = new Date(); today0.setHours(0,0,0,0);
+  const up = orders.filter(o=>!['delivered','cancelled'].includes(o.status) && o.schedule).sort((a,b)=>a.schedule.date.localeCompare(b.schedule.date));
+  $('deliv').innerHTML = up.length ? up.slice(0,6).map(o=>{ const d=new Date(o.schedule.date+'T00:00:00'); const late=d<today0;
+    return `<div class="li"><div style="text-align:center;min-width:44px"><div style="font-family:var(--font-head);font-size:22px;font-weight:600;color:${late?'var(--danger)':'var(--primary)'};line-height:1">${d.getDate()}</div><div class="muted" style="font-size:10.5px;text-transform:uppercase">${d.toLocaleDateString('en-PH',{month:'short'})}</div></div>
+    <div class="grow"><b>${o.ref} · ${esc(o.customer)}</b><span class="muted">${esc(o.schedule.slot)} · ${esc(o.address)}</span></div><span class="badge ${SB[o.status]}">${ORDER_LABEL[o.status]}</span></div>`; }).join('') : '<div class="empty"><div class="ic"></div>No scheduled deliveries.</div>';
+
+  if(low.length) Admin.topChips(`<span class="chip warn">${low.length} low stock</span>`);
+})();
+</script>
+</body>
+</html>

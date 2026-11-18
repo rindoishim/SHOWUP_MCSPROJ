@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reports | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+<style>
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.trend{display:flex;align-items:flex-end;gap:4px;height:190px;padding-top:12px}
+.trend .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.trend .b{width:100%;background:var(--primary);border-radius:3px 3px 0 0;min-height:2px;transition:height .4s}
+.trend .c:hover .b{background:var(--accent);color:var(--on-accent)}
+.trend .d{font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+.donut{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.legend div{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.rep-head h2{font-family:var(--font-head);font-size:26px;font-weight:600;color:var(--primary)}
+@media (max-width:1000px){.grid2{grid-template-columns:1fr}}
+@media print{.card{break-inside:avoid;box-shadow:none}.grid2{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="rep-head">
+    <div><h2>Sales & Inventory Report</h2><div class="muted" style="font-size:13px" id="range-lbl"></div></div>
+    <div class="toolbar no-print" style="margin:0">
+      <select class="select auto" id="range"><option value="7">Last 7 days</option><option value="14" selected>Last 14 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
+      <select class="select auto" id="channel"><option value="">All channels</option><option value="In-store">In-store (POS)</option><option value="Online">Online orders</option></select>
+      <button class="btn btn-ghost" id="csv">Sales CSV</button>
+      <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="stats" id="kpi"></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-head"><span class="card-title">Daily revenue</span><span class="muted" style="font-size:12px" id="peak"></span></div><div class="card-body"><div class="trend" id="trend"></div></div></div>
+  <div class="grid2">
+    <div class="card"><div class="card-head"><span class="card-title">Top products by revenue</span></div><div class="card-body" id="top"></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Revenue by category</span></div><div class="card-body" id="bycat"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="card-head"><span class="card-title">Payment methods</span></div><div class="card-body"><div class="donut" id="pay"></div></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Sales channel</span></div><div class="card-body"><div class="donut" id="chan"></div></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-head"><span class="card-title">Recent activity</span><span class="muted" style="font-size:13px">Latest sales across the counter and online</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>When</th><th>Channel</th><th>Customer</th><th>Items</th><th>Payment</th><th class="r">Total</th></tr></thead><tbody id="recent"></tbody></table></div></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-head"><span class="card-title">Restocking report: items at or below reorder level</span><button class="btn btn-ghost btn-sm no-print" id="csv-stock">CSV</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>SKU</th><th>Product</th><th>Category</th><th class="r">On hand</th><th class="r">Reorder level</th><th class="r">Sold in period</th><th class="r">Suggested order</th><th class="r">Est. cost</th></tr></thead><tbody id="restock"></tbody></table></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">Slow movers: no sales in period</span></div><div class="card-body" id="slow"></div></div>
+</main>
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('reports','Reports'); if(!user) return;
+  const {Reports, Catalog, PAY_LABEL, CAT_COLORS, peso, pesoShort, esc, fmtDate, fmtDateTime, downloadCSV} = VH;
+  const $ = id => document.getElementById(id);
+  const COLORS = ['oklch(30% .02 255)','oklch(80% .165 80)','oklch(62% .09 228)','oklch(74% .07 52)','oklch(66% .06 142)','oklch(84% .02 250)'];
+
+  function data(){
+    const days = +$('range').value, ch = $('channel').value;
+    const from = new Date(); from.setHours(0,0,0,0); from.setDate(from.getDate()-days+1);
+    const sales = Reports.sales().filter(s=>new Date(s.at)>=from && (!ch||s.channel===ch));
+    return {days, from, sales};
+  }
+  function donut(el, parts){
+    const tot = parts.reduce((a,p)=>a+p.v,0)||1; let acc=0;
+    const segs = parts.map((p,i)=>{ const start=acc/tot*100; acc+=p.v; return `${COLORS[i%COLORS.length]} ${start}% ${acc/tot*100}%`; }).join(',');
+    el.innerHTML = `<div style="width:130px;height:130px;border-radius:50%;background:conic-gradient(${segs||'var(--sunken) 0 100%'});position:relative;flex-shrink:0"><div style="position:absolute;inset:26px;background:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column"><b style="font-family:var(--font-head);font-size:18px">${pesoShort(tot)}</b><span class="muted" style="font-size:10px">total</span></div></div>
+      <div class="legend">${parts.map((p,i)=>`<div><i style="background:${COLORS[i%COLORS.length]}"></i><span style="min-width:110px">${esc(p.l)}</span><b>${pesoShort(p.v)}</b><span class="muted">${Math.round(p.v/tot*100)}%</span></div>`).join('')}</div>`;
+  }
+  function bars(el, rows, color){
+    const max = Math.max(1,...rows.map(r=>r.v));
+    el.innerHTML = rows.length ? rows.map(r=>`<div class="bar-row"><div class="bar-l" title="${esc(r.l)}">${esc(r.l)}</div><div class="bar-t"><div class="bar-f" style="width:${r.v/max*100}%;background:${r.c||color||'var(--accent)'}"></div></div><div class="bar-v">${pesoShort(r.v)}</div></div>`).join('') : '<div class="empty">No sales in this period.</div>';
+  }
+
+  function render(){
+    const {days, from, sales} = data();
+    $('range-lbl').textContent = fmtDate(from)+' – '+fmtDate(new Date())+' · generated '+fmtDateTime(new Date());
+    const rev = sales.reduce((a,s)=>a+s.total,0);
+    const net = sales.reduce((a,s)=>a+s.subtotal,0);
+    const units = sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0);
+    // gross profit on net-of-VAT sales using current cost
+    const cogs = sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{ const p=Catalog.product(i.id); return b+(p?p.cost:i.price*.7)*i.qty; },0),0);
+    $('kpi').innerHTML = `
+      <div class="stat"><div class="stat-l">Gross revenue</div><div class="stat-v">${pesoShort(rev)}</div><div class="stat-s">incl. VAT & delivery</div></div>
+      <div class="stat blue"><div class="stat-l">Transactions</div><div class="stat-v">${sales.length}</div><div class="stat-s">avg ${pesoShort(sales.length?rev/sales.length:0)}</div></div>
+      <div class="stat purple"><div class="stat-l">Units sold</div><div class="stat-v">${units.toLocaleString()}</div></div>
+      <div class="stat green"><div class="stat-l">Est. gross profit</div><div class="stat-v">${pesoShort(net-cogs)}</div><div class="stat-s">${net?Math.round((net-cogs)/net*100):0}% margin on net sales</div></div>
+      <div class="stat red"><div class="stat-l">VAT collected</div><div class="stat-v">${pesoShort(net*VH.RULES.VAT)}</div></div>`;
+
+    // trend
+    const dk = d=>{const x=new Date(d);return x.toDateString();};
+    const pts=[]; for(let i=days-1;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const k=dk(d); pts.push({d, v:sales.filter(s=>dk(s.at)===k).reduce((a,s)=>a+s.total,0)}); }
+    const max = Math.max(1,...pts.map(p=>p.v)); const pk = pts.reduce((a,p)=>p.v>a.v?p:a,pts[0]);
+    $('peak').textContent = pk.v?'Best day: '+fmtDate(pk.d)+' · '+peso(pk.v):'';
+    const every = Math.ceil(days/14);
+    $('trend').innerHTML = pts.map((p,i)=>`<div class="c" title="${fmtDate(p.d)}: ${peso(p.v)}"><div class="b" style="height:${p.v/max*160}px"></div><div class="d">${i%every===0?p.d.toLocaleDateString('en-PH',{month:'short',day:'numeric'}):'&nbsp;'}</div></div>`).join('');
+
+    // products & categories
+    const pm={}, cm={}, sold={};
+    sales.forEach(s=>s.items.forEach(i=>{ const line=i.price*i.qty; pm[i.id]=pm[i.id]||{l:i.name,v:0}; pm[i.id].v+=line; sold[i.id]=(sold[i.id]||0)+i.qty;
+      const p=Catalog.product(i.id); const c=p?Catalog.category(p.catId):{name:'Other',color:'gray'}; cm[c.name]=cm[c.name]||{l:c.name,v:0}; cm[c.name].v+=line; }));
+    bars($('top'), Object.values(pm).sort((a,b)=>b.v-a.v).slice(0,8));
+    bars($('bycat'), Object.values(cm).sort((a,b)=>b.v-a.v));
+
+    const pay={}; sales.forEach(s=>{ const k=PAY_LABEL[s.pay]||s.pay; pay[k]=(pay[k]||0)+s.total; });
+    donut($('pay'), Object.entries(pay).map(([l,v])=>({l,v})).sort((a,b)=>b.v-a.v));
+    const chn={}; sales.forEach(s=>{ chn[s.channel]=(chn[s.channel]||0)+s.total; });
+    donut($('chan'), Object.entries(chn).map(([l,v])=>({l,v})));
+
+    // restock
+    const low = Catalog.products().filter(p=>p.stock<=p.threshold).sort((a,b)=>a.stock/Math.max(1,a.threshold)-b.stock/Math.max(1,b.threshold));
+    const sugg = p => Math.max(p.threshold*2 - p.stock, Math.ceil((sold[p.id]||0)/days*14) - p.stock, 1);
+    $('restock').innerHTML = low.length ? low.map(p=>`<tr><td><code>${esc(p.sku)}</code></td><td><b>${esc(p.name)}</b></td><td class="muted">${esc(Catalog.category(p.catId).name)}</td><td class="r"><span class="badge ${p.stock===0?'b-red':'b-yellow'}">${p.stock} ${esc(p.unit)}</span></td><td class="r">${p.threshold}</td><td class="r">${sold[p.id]||0}</td><td class="r"><b>${sugg(p)}</b></td><td class="r">${peso(sugg(p)*p.cost)}</td></tr>`).join('')+
+      `<tr><td colspan="7" class="r"><b>Total estimated purchase cost</b></td><td class="r"><b>${peso(low.reduce((a,p)=>a+sugg(p)*p.cost,0))}</b></td></tr>` : '<tr><td colspan="8" class="empty">✅ Nothing to reorder.</td></tr>';
+    $('csv-stock').onclick = ()=>downloadCSV('vreymar-restock-'+new Date().toISOString().slice(0,10)+'.csv',[['SKU','Product','On hand','Reorder level','Sold in period','Suggested order','Unit cost','Est. cost'],...low.map(p=>[p.sku,p.name,p.stock,p.threshold,sold[p.id]||0,sugg(p),p.cost,(sugg(p)*p.cost).toFixed(2)])]);
+
+    $('recent').innerHTML = sales.slice(0,8).map(s=>`<tr><td><code>${esc(s.ref)}</code></td><td class="muted" style="white-space:nowrap">${fmtDateTime(s.at)}</td><td>${s.channel}</td><td>${esc(s.customer)}</td><td>${s.items.reduce((a,i)=>a+i.qty,0)} units</td><td>${PAY_LABEL[s.pay]||esc(s.pay)}</td><td class="r"><b>${peso(s.total)}</b></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No sales in this period.</td></tr>';
+    const slow = Catalog.products().filter(p=>!sold[p.id] && p.stock>0).sort((a,b)=>b.cost*b.stock-a.cost*a.stock);
+    $('slow').innerHTML = slow.length ? `<div class="muted" style="font-size:12.5px;margin-bottom:10px">${slow.length} products with stock on hand worth ${peso(slow.reduce((a,p)=>a+p.cost*p.stock,0))} at cost had no sales. Consider promotions or lower reorder levels.</div>`+
+      slow.slice(0,12).map(p=>`<span class="badge b-gray" style="margin:0 6px 6px 0;text-transform:none;font-size:12px">${esc(p.name)} · ${p.stock} ${esc(p.unit)}</span>`).join('') : '<div class="empty">Every stocked product sold at least once. </div>';
+
+    $('csv').onclick = ()=>{ downloadCSV('vreymar-sales-'+new Date().toISOString().slice(0,10)+'.csv',[['Ref','Date','Channel','Customer','Items','Net','Total','Payment'],...sales.map(s=>[s.ref,fmtDateTime(s.at),s.channel,s.customer,s.items.map(i=>i.qty+'x '+i.name).join('; '),s.subtotal.toFixed(2),s.total.toFixed(2),PAY_LABEL[s.pay]||s.pay])]); Admin.toast('Exported '+sales.length+' sales.','success'); };
+  }
+  $('range').onchange = render; $('channel').onchange = render;
+  render();
+})();
+</script>
+</body>
+</html>

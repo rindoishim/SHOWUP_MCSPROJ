@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inventory | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+<style>
+.sbar{height:5px;background:var(--secondary);border-radius:3px;margin-top:5px;width:72px;overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:3px}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted);flex-wrap:wrap;gap:8px}
+.pager div{display:flex;gap:4px}
+.pg{min-width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--paper);cursor:pointer;font-size:12px;font-weight:700}
+.pg:hover{background:var(--hover)}.pg.on{background:var(--fill);color:var(--on-fill);border-color:transparent}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.cat-card{background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px}
+.cat-card .top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.inv-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.ig{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:6px;overflow:hidden}
+.ig-art{position:relative;aspect-ratio:4/3;border-radius:var(--r-md);overflow:hidden;background:var(--tile);display:flex;align-items:center;justify-content:center}
+.ig-art .art{width:55%}
+.ig-art .badge{position:absolute;top:8px;left:8px}
+.ig-b{padding:10px 8px 6px}
+.ig-b>b{display:block;font-size:15px;line-height:1.25;margin-top:2px}
+.ig-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
+.cat-ic{width:56px;height:56px;border-radius:var(--r-md);background:var(--tile);display:flex;align-items:center;justify-content:center;flex-shrink:0}.cat-ic .art{width:46px;height:46px}
+.rs{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.rs:last-child{border:none}
+.rs .grow{flex:1;min-width:180px}
+.rs input{width:84px}
+.preview{padding:10px 14px;background:var(--success-tint);border:0;border-radius:var(--r-md);font-size:13px;color:var(--success);margin-top:12px}
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="stats" id="stats"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-t="products">Products</button>
+    <button class="tab" data-t="categories">Categories</button>
+    <button class="tab" data-t="restock">Restock <span class="cnt" id="low-cnt"></span></button>
+    <button class="tab" data-t="log">Stock Movements</button>
+  </div>
+
+  <section class="pane on" id="p-products">
+    <div class="toolbar">
+      <div class="search"><span></span><input class="input" id="q" placeholder="Search name, SKU, brand…"/></div>
+      <select class="select auto" id="f-cat"></select>
+      <select class="select auto" id="f-stock"><option value="">All stock</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+      <select class="select auto" id="f-view" aria-label="View"><option value="table">Table view</option><option value="grid">Grid view</option></select>
+      <button class="btn btn-ghost" id="csv">Export CSV</button>
+      <button class="btn btn-primary" id="add">Add product</button>
+    </div>
+    <div class="inv-grid" id="inv-grid" style="display:none"></div>
+    <div class="card" id="inv-table">
+      <div class="tbl-wrap"><table>
+        <thead><tr><th class="sort" data-s="sku">SKU</th><th class="sort asc" data-s="name">Product</th><th>Category</th><th class="sort r" data-s="price">Price</th><th class="sort r" data-s="cost">Cost</th><th class="sort" data-s="stock">Stock</th><th>Status</th><th style="width:200px">Actions</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table></div>
+      <div class="pager"><span id="pinfo"></span><div id="pbtns"></div></div>
+    </div>
+  </section>
+
+  <section class="pane" id="p-categories">
+    <div class="toolbar"><span class="muted" style="flex:1;font-size:13px">Categories group products in the store, POS and reports.</span><button class="btn btn-primary" id="add-cat">Add Category</button></div>
+    <div class="cat-grid" id="cats"></div>
+  </section>
+
+  <section class="pane" id="p-restock">
+    <div class="card"><div class="card-head"><span class="card-title">Items at or below reorder level</span><button class="btn btn-accent btn-sm" id="restock-all">Restock all +50</button></div>
+      <div class="card-body" id="restock"></div></div>
+  </section>
+
+  <section class="pane" id="p-log">
+    <div class="card"><div class="card-head"><span class="card-title">Stock movement history</span><input class="input" id="log-q" placeholder="Filter by product or reason…" style="width:240px"/></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Date & time</th><th>Product</th><th class="r">Change</th><th class="r">Before → After</th><th>Reason</th><th>By</th></tr></thead><tbody id="log"></tbody></table></div></div>
+  </section>
+</main>
+
+<!-- Product modal -->
+<div class="modal-overlay" id="pm"><div class="modal" style="width:620px">
+  <div class="modal-head"><span class="modal-title" id="pm-t">Add Product</span><button class="modal-x" data-close="pm">✕</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="full"><label class="label" for="f-name">Product name *</label><input class="input" id="f-name"/></div>
+    <div><label class="label" for="f-sku">SKU *</label><input class="input" id="f-sku" style="text-transform:uppercase"/><div class="hint">Unique product code, e.g. HW-007</div></div>
+    <div><label class="label" for="f-catid">Category *</label><select class="select" id="f-catid"></select></div>
+    <div><label class="label" for="f-price">Selling price (₱) *</label><input class="input" id="f-price" type="number" min="0" step="0.01"/></div>
+    <div><label class="label" for="f-cost">Cost price (₱)</label><input class="input" id="f-cost" type="number" min="0" step="0.01"/></div>
+    <div><label class="label" for="p-stock">Stock on hand</label><input class="input" id="p-stock" type="number" min="0"/><div class="hint" id="stock-hint"></div></div>
+    <div><label class="label" for="f-th">Reorder level</label><input class="input" id="f-th" type="number" min="0"/></div>
+    <div><label class="label" for="f-unit">Unit</label><input class="input" id="f-unit" placeholder="pcs, bag, m, kg…"/></div>
+    <div><label class="label" for="f-brand">Brand</label><input class="input" id="f-brand"/></div>
+    <div><label class="label" for="f-loc">Location / aisle</label><input class="input" id="f-loc" placeholder="Aisle 3-B"/></div>
+    <div><label class="label" for="f-badge">Store badge</label><select class="select" id="f-badge"><option value="">None</option><option value="hot">Hot</option><option value="sale">Sale</option><option value="new">New</option></select></div>
+    <div><label class="label" for="f-orig">Original price (for sale)</label><input class="input" id="f-orig" type="number" min="0" step="0.01" placeholder="Optional"/></div>
+    <div><label class="label" for="f-img">Image URL</label><input class="input" id="f-img" placeholder="https://… (optional)"/></div>
+    <div class="full"><label class="label" for="f-desc">Description</label><textarea class="textarea" id="f-desc"></textarea></div>
+  </div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close="pm">Cancel</button><button class="btn btn-primary" id="pm-save">Save product</button></div>
+</div></div>
+
+<!-- Adjust modal -->
+<div class="modal-overlay" id="am"><div class="modal" style="width:420px">
+  <div class="modal-head"><span class="modal-title">Adjust stock</span><button class="modal-x" data-close="am">✕</button></div>
+  <div class="modal-body">
+    <div style="padding:11px 14px;background:var(--secondary);border-radius:8px;margin-bottom:14px"><b id="am-name"></b><div class="muted" style="font-size:12.5px">Current stock: <b id="am-cur"></b></div></div>
+    <div style="margin-bottom:12px"><label class="label" for="am-type">Adjustment</label><select class="select" id="am-type"><option value="add">Receive / restock</option><option value="remove">Remove (damage, loss, return to supplier)</option><option value="set">Set exact count (stocktake)</option></select></div>
+    <div style="margin-bottom:12px"><label class="label" for="am-qty">Quantity</label><input class="input" id="am-qty" type="number" min="0"/></div>
+    <div><label class="label" for="am-reason">Reason / reference</label><input class="input" id="am-reason" placeholder="e.g. Delivery from supplier DR#1234"/></div>
+    <div class="preview" id="am-prev">New stock: -</div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close="am">Cancel</button><button class="btn btn-primary" id="am-save">Apply</button></div>
+</div></div>
+
+<!-- Category modal -->
+<div class="modal-overlay" id="cm"><div class="modal" style="width:440px">
+  <div class="modal-head"><span class="modal-title" id="cm-t">Add Category</span><button class="modal-x" data-close="cm">✕</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="full"><label class="label" for="c-name">Name *</label><input class="input" id="c-name"/></div>
+    <input type="hidden" id="c-icon"/>
+    <div><label class="label" for="c-color">Color</label><select class="select" id="c-color"><option value="yellow">Amber</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option><option value="purple">Purple</option><option value="gray">Gray</option></select></div>
+    <div class="full"><label class="label" for="c-desc">Description</label><input class="input" id="c-desc"/></div>
+  </div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close="cm">Cancel</button><button class="btn btn-primary" id="cm-save">Save</button></div>
+</div></div>
+
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('inventory','Inventory Management'); if(!user) return;
+  const {Catalog, Auth, CAT_COLORS, peso, pesoShort, esc, fmtDateTime, downloadCSV} = VH;
+  const $ = id => document.getElementById(id);
+  const me = Auth.fullName(user);
+  const BADGE = {yellow:'b-yellow',blue:'b-blue',green:'b-green',red:'b-red',purple:'b-purple',gray:'b-gray'};
+  const PER = 15;
+  let sortCol='name', sortDir=1, page=1, editId=null, adjId=null, editCat=null;
+
+  /* tabs */
+  function tab(t){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===t)); document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t)); history.replaceState(null,'','#'+t); renderAll(); }
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>tab(t.dataset.t));
+
+  function stats(){
+    const ps = Catalog.products(); const low = ps.filter(p=>p.stock<=p.threshold);
+    $('stats').innerHTML = `
+      <div class="stat"><div class="stat-ic"></div><div class="stat-l">Products</div><div class="stat-v">${ps.length}</div><div class="stat-s">${Catalog.categories().length} categories</div></div>
+      <div class="stat blue"><div class="stat-ic"></div><div class="stat-l">Units on hand</div><div class="stat-v">${ps.reduce((a,p)=>a+p.stock,0).toLocaleString()}</div></div>
+      <div class="stat green"><div class="stat-ic"></div><div class="stat-l">Value at cost</div><div class="stat-v">${pesoShort(ps.reduce((a,p)=>a+p.cost*p.stock,0))}</div><div class="stat-s">Retail ${pesoShort(ps.reduce((a,p)=>a+p.price*p.stock,0))}</div></div>
+      <div class="stat red"><div class="stat-ic"></div><div class="stat-l">Low / out</div><div class="stat-v">${low.length}</div><div class="stat-s">${ps.filter(p=>p.stock===0).length} out of stock</div></div>`;
+    $('low-cnt').textContent = low.length || ''; $('low-cnt').style.display = low.length?'':'none';
+    Admin.topChips(low.length?`<span class="chip warn">${low.length} low stock</span>`:'');
+  }
+  function catFilter(){
+    const cur = $('f-cat').value;
+    $('f-cat').innerHTML = '<option value="">All categories</option>'+Catalog.categories().map(c=>`<option value="${c.id}">${c.icon} ${esc(c.name)}</option>`).join('');
+    $('f-cat').value = cur;
+  }
+
+  /* products */
+  function filtered(){
+    const q=$('q').value.trim().toLowerCase(), c=+$('f-cat').value, s=$('f-stock').value;
+    return Catalog.products().filter(p=>{
+      if(q && ![p.name,p.sku,p.brand].join(' ').toLowerCase().includes(q)) return false;
+      if(c && p.catId!==c) return false;
+      const k = Catalog.stockStatus(p).key; if(s && k!==s) return false;
+      return true;
+    }).sort((a,b)=>{ let x=a[sortCol], y=b[sortCol]; if(typeof x==='string'){x=x.toLowerCase();y=y.toLowerCase();} return x<y?-sortDir:x>y?sortDir:0; });
+  }
+  function renderProducts(){
+    const l = filtered(); const pages = Math.max(1,Math.ceil(l.length/PER)); if(page>pages) page=1;
+    const sl = l.slice((page-1)*PER, page*PER);
+    $('tbody').innerHTML = sl.length ? sl.map(p=>{
+      const c = Catalog.category(p.catId), st = Catalog.stockStatus(p);
+      const pct = Math.min(100, p.stock/Math.max(1,p.threshold*3)*100);
+      const col = st.key==='out'?'var(--danger)':st.key==='low'?'var(--accent)':'var(--success)';
+      return `<tr><td><code>${esc(p.sku)}</code></td>
+        <td><b>${esc(p.name)}</b><div class="muted" style="font-size:11.5px">${esc(p.brand||'')}${p.location?' · '+esc(p.location):''}</div></td>
+        <td><span class="badge ${BADGE[c.color]}">${c.icon} ${esc(c.name)}</span></td>
+        <td class="r"><b>${peso(p.price)}</b><div class="muted" style="font-size:11px">/ ${esc(p.unit)}</div></td>
+        <td class="r muted">${peso(p.cost)}</td>
+        <td><b>${p.stock}</b> <span class="muted" style="font-size:11.5px">${esc(p.unit)}</span><div class="sbar"><i style="width:${pct}%;background:${col}"></i></div></td>
+        <td><span class="badge ${st.key==='out'?'b-red':st.key==='low'?'b-yellow':'b-green'}">${st.label}</span></td>
+        <td><button class="icon-btn" data-adj="${p.id}" title="Adjust stock">Stock</button> <button class="icon-btn" data-edit="${p.id}" title="Edit">Edit</button> <button class="icon-btn del" data-del="${p.id}" title="Delete">Delete</button></td></tr>`;
+    }).join('') : '<tr><td colspan="8" class="empty">No products match your filters.</td></tr>';
+    const grid = $('f-view').value==='grid';
+    $('inv-table').style.display = grid?'none':''; $('inv-grid').style.display = grid?'grid':'none';
+    if(grid) $('inv-grid').innerHTML = l.length ? l.map(p=>{ const st=Catalog.stockStatus(p);
+      return `<div class="ig"><div class="ig-art" data-tile="${Admin.tileOf(p.catId)}">${Art.cat(p.catId)}${st.key!=='in'?`<span class="badge ${st.key==='out'?'b-red':'b-yellow'}">${st.label}</span>`:''}</div>
+        <div class="ig-b"><div class="muted" style="font-size:13px">${esc(Catalog.category(p.catId).name)} · ${esc(p.sku)}</div><b>${esc(p.name)}</b>
+        <div class="ig-row"><span style="font-family:var(--font-head);font-size:24px;font-weight:600">${peso(p.price)}</span><span><b>${p.stock}</b> ${esc(p.unit)}</span></div>
+        <div style="display:flex;gap:4px;margin-top:10px"><button class="icon-btn" data-adj="${p.id}">Stock</button><button class="icon-btn" data-edit="${p.id}">Edit</button><button class="icon-btn del" data-del="${p.id}">Delete</button></div></div></div>`; }).join('') : '<div class="empty">No products match your filters.</div>';
+    $('pinfo').textContent = `Showing ${sl.length?((page-1)*PER+1):0}–${(page-1)*PER+sl.length} of ${l.length}`;
+    $('pbtns').innerHTML = pages>1 ? Array.from({length:pages},(_,i)=>`<button class="pg${i+1===page?' on':''}" data-pg="${i+1}">${i+1}</button>`).join('') : '';
+  }
+  document.querySelectorAll('th.sort').forEach(th=>th.onclick=()=>{ const c=th.dataset.s; if(sortCol===c) sortDir*=-1; else {sortCol=c;sortDir=1;} document.querySelectorAll('th.sort').forEach(x=>x.classList.remove('asc','desc')); th.classList.add(sortDir===1?'asc':'desc'); renderProducts(); });
+  ['q','f-cat','f-stock','f-view'].forEach(id=>$(id).addEventListener(id==='q'?'input':'change',()=>{page=1;renderProducts();}));
+  $('inv-grid').onclick = e=>{ const a=e.target.closest('[data-adj]'), ed=e.target.closest('[data-edit]'), d=e.target.closest('[data-del]'); if(a) openAdj(+a.dataset.adj); if(ed) openProd(+ed.dataset.edit); if(d) delProd(+d.dataset.del); };
+  $('pbtns').onclick = e=>{ const b=e.target.closest('[data-pg]'); if(b){ page=+b.dataset.pg; renderProducts(); } };
+  $('tbody').onclick = e=>{
+    const a=e.target.closest('[data-adj]'), ed=e.target.closest('[data-edit]'), d=e.target.closest('[data-del]');
+    if(a) openAdj(+a.dataset.adj); if(ed) openProd(+ed.dataset.edit); if(d) delProd(+d.dataset.del);
+  };
+
+  function openProd(id){
+    editId = id||null; const p = id?Catalog.product(id):null;
+    $('pm-t').textContent = p?'Edit Product':'Add Product';
+    $('f-catid').innerHTML = Catalog.categories().map(c=>`<option value="${c.id}">${c.icon} ${esc(c.name)}</option>`).join('');
+    const v = (k,d)=>p&&p[k]!=null?p[k]:d;
+    $('f-name').value=v('name',''); $('f-sku').value=v('sku',''); $('f-catid').value=v('catId',+$('f-cat').value||1);
+    $('f-price').value=v('price',''); $('f-cost').value=v('cost',''); $('p-stock').value=v('stock',0); $('f-th').value=v('threshold',10);
+    $('f-unit').value=v('unit','pcs'); $('f-brand').value=v('brand',''); $('f-loc').value=v('location',''); $('f-badge').value=v('badge','')||'';
+    $('f-orig').value=v('orig','')||''; $('f-img').value=v('img',''); $('f-desc').value=v('desc','');
+    $('p-stock').disabled = !!p; $('stock-hint').textContent = p?'Use “Adjust stock” to change quantity (keeps an audit trail).':'Opening stock';
+    Admin.openModal('pm'); $('f-name').focus();
+  }
+  $('add').onclick = ()=>openProd();
+  $('pm-save').onclick = ()=>{
+    const name=$('f-name').value.trim(), sku=$('f-sku').value.trim().toUpperCase(), price=parseFloat($('f-price').value);
+    if(!name||!sku) return Admin.toast('Name and SKU are required.','danger');
+    if(!(price>=0)) return Admin.toast('Enter a valid selling price.','danger');
+    const list = Catalog.products();
+    if(list.some(p=>p.sku===sku && p.id!==editId)) return Admin.toast('SKU '+sku+' already exists.','danger');
+    const orig = parseFloat($('f-orig').value);
+    const data = {name, sku, catId:+$('f-catid').value, price, cost:parseFloat($('f-cost').value)||0, threshold:Math.max(0,parseInt($('f-th').value)||0),
+      unit:$('f-unit').value.trim()||'pcs', brand:$('f-brand').value.trim(), location:$('f-loc').value.trim(), badge:$('f-badge').value||null,
+      orig: orig>price?orig:null, img:$('f-img').value.trim(), desc:$('f-desc').value.trim()};
+    if(data.img && !/^https?:\/\//i.test(data.img)) return Admin.toast('Image URL must start with http:// or https://','danger');
+    if(editId){ Object.assign(list.find(p=>p.id===editId), data); Catalog.saveProducts(list); Admin.toast('Product updated.','success'); }
+    else {
+      const id = Math.max(0,...list.map(p=>p.id))+1; const stock = Math.max(0,parseInt($('p-stock').value)||0);
+      list.push({id, ...data, stock, rating:0}); Catalog.saveProducts(list);
+      if(stock) VH.write(VH.K.stocklog, [{at:new Date().toISOString(),id,sku,name,before:0,after:stock,delta:stock,reason:'Opening stock',by:me}, ...Catalog.stockLog()]);
+      Admin.toast('Product added.','success');
+    }
+    Admin.closeModal('pm'); renderAll();
+  };
+  async function delProd(id){
+    const p = Catalog.product(id);
+    if(!await Admin.confirm('Delete '+p.name+'?','This removes the product from the store, POS and inventory. Past sales and orders keep their records.','Delete',true)) return;
+    Catalog.saveProducts(Catalog.products().filter(x=>x.id!==id));
+    VH.Cart.remove(id); Admin.toast('Product deleted.','danger'); renderAll();
+  }
+
+  /* adjust */
+  function openAdj(id){ adjId=id; const p=Catalog.product(id); $('am-name').textContent=p.name; $('am-cur').textContent=p.stock+' '+p.unit; $('am-type').value='add'; $('am-qty').value=''; $('am-reason').value=''; adjPrev(); Admin.openModal('am'); $('am-qty').focus(); }
+  function adjNew(){ const p=Catalog.product(adjId); const t=$('am-type').value, q=Math.max(0,parseInt($('am-qty').value)||0); return t==='add'?p.stock+q:t==='remove'?Math.max(0,p.stock-q):q; }
+  function adjPrev(){ const p=Catalog.product(adjId); const n=adjNew(); $('am-prev').textContent='New stock: '+n+' '+p.unit+(n<=p.threshold?', at or below reorder level ('+p.threshold+')':''); }
+  ['am-type','am-qty'].forEach(i=>$(i).addEventListener('input',adjPrev));
+  $('am-save').onclick = ()=>{
+    const p=Catalog.product(adjId); const t=$('am-type').value; const q=parseInt($('am-qty').value);
+    if(isNaN(q)||q<0||(t!=='set'&&q===0)) return Admin.toast('Enter a quantity.','danger');
+    const reason = $('am-reason').value.trim() || {add:'Restock',remove:'Stock removed',set:'Stocktake count'}[t];
+    Catalog.adjustStock(adjId, adjNew()-p.stock, reason, me);
+    Admin.closeModal('am'); Admin.toast('Stock updated for '+p.name+'.','success'); renderAll();
+  };
+
+  /* categories */
+  function renderCats(){
+    const ps = Catalog.products();
+    $('cats').innerHTML = Catalog.categories().map(c=>{ const n=ps.filter(p=>p.catId===c.id).length;
+      return `<div class="cat-card"><div class="top"><div class="cat-ic" data-tile="${Admin.tileOf(c.id)}">${Art.cat(c.id)}</div><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600;letter-spacing:-.02em;color:var(--ink)">${esc(c.name)}</div><div class="muted" style="font-size:12px">${esc(c.desc||'')}</div></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between"><span class="muted" style="font-size:12.5px">${n} product${n!==1?'s':''}</span><span><button class="icon-btn" data-ec="${c.id}">Edit</button> <button class="icon-btn del" data-dc="${c.id}">Delete</button></span></div></div>`; }).join('');
+  }
+  function openCat(id){ editCat=id||null; const c=id?Catalog.category(id):null; $('cm-t').textContent=c?'Edit Category':'Add Category'; $('c-name').value=c?c.name:''; $('c-icon').value=c?c.icon:''; $('c-color').value=c?c.color:'yellow'; $('c-desc').value=c?c.desc||'':''; Admin.openModal('cm'); }
+  $('add-cat').onclick = ()=>openCat();
+  $('cats').onclick = async e=>{
+    const ec=e.target.closest('[data-ec]'), dc=e.target.closest('[data-dc]');
+    if(ec) openCat(+ec.dataset.ec);
+    if(dc){ const id=+dc.dataset.dc; if(Catalog.products().some(p=>p.catId===id)) return Admin.toast('Move or delete this category\'s products first.','warn');
+      if(await Admin.confirm('Delete category?','This category has no products.','Delete',true)){ Catalog.saveCategories(Catalog.categories().filter(c=>c.id!==id)); renderAll(); } }
+  };
+  $('cm-save').onclick = ()=>{
+    const name=$('c-name').value.trim(); if(!name) return Admin.toast('Category name is required.','danger');
+    const cats = Catalog.categories(); const data={name,icon:$('c-icon').value.trim()||'',color:$('c-color').value,desc:$('c-desc').value.trim()};
+    if(cats.some(c=>c.name.toLowerCase()===name.toLowerCase() && c.id!==editCat)) return Admin.toast('A category with that name exists.','danger');
+    if(editCat) Object.assign(cats.find(c=>c.id===editCat),data); else cats.push({id:Math.max(0,...cats.map(c=>c.id))+1,...data});
+    Catalog.saveCategories(cats); Admin.closeModal('cm'); Admin.toast('Category saved.','success'); renderAll();
+  };
+
+  /* restock */
+  function renderRestock(){
+    const low = Catalog.products().filter(p=>p.stock<=p.threshold).sort((a,b)=>a.stock-b.stock);
+    $('restock-all').style.display = low.length?'':'none';
+    $('restock').innerHTML = low.length ? low.map(p=>{ const sug=Math.max(1,p.threshold*2-p.stock);
+      return `<div class="rs"><div class="grow"><b>${esc(p.name)}</b><div class="muted" style="font-size:12px">${esc(p.sku)} · ${esc(p.location||'-')} · reorder level ${p.threshold}</div></div>
+      <span class="badge ${p.stock===0?'b-red':'b-yellow'}">${p.stock} ${esc(p.unit)} left</span>
+      <input class="input" type="number" min="1" value="${sug}" id="rq-${p.id}" aria-label="Quantity to receive"/><button class="btn btn-accent btn-sm" data-rq="${p.id}">Receive</button></div>`; }).join('')
+      : '<div class="empty"><div class="ic">✅</div>All products are above their reorder level.</div>';
+  }
+  $('restock').onclick = e=>{ const b=e.target.closest('[data-rq]'); if(!b) return; const id=+b.dataset.rq; const q=parseInt($('rq-'+id).value)||0; if(q<1) return; Catalog.adjustStock(id,q,'Restock (reorder list)',me); Admin.toast('+'+q+' received for '+Catalog.product(id).name,'success'); renderAll(); };
+  $('restock-all').onclick = async ()=>{
+    const low = Catalog.products().filter(p=>p.stock<=p.threshold);
+    if(!await Admin.confirm('Restock '+low.length+' items?','Each item gets +50 units, logged as a bulk restock.','Restock all +50')) return;
+    low.forEach(p=>Catalog.adjustStock(p.id, 50, 'Bulk restock (+50)', me)); Admin.toast(low.length+' items restocked.','success'); renderAll();
+  };
+
+  /* log */
+  function renderLog(){
+    const q=$('log-q').value.trim().toLowerCase();
+    const l = Catalog.stockLog().filter(x=>!q || (x.name+' '+x.sku+' '+x.reason+' '+x.by).toLowerCase().includes(q)).slice(0,200);
+    $('log').innerHTML = l.length ? l.map(x=>`<tr><td class="muted" style="font-size:12.5px;white-space:nowrap">${fmtDateTime(x.at)}</td><td><b>${esc(x.name)}</b> <code>${esc(x.sku)}</code></td><td class="r"><b style="color:${x.delta<0?'var(--danger)':'var(--success)'}">${x.delta>0?'+':''}${x.delta}</b></td><td class="r muted">${x.before} → ${x.after}</td><td>${esc(x.reason)}</td><td class="muted">${esc(x.by)}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="empty">No stock movements recorded yet. Sales, online orders and adjustments appear here.</td></tr>';
+  }
+  $('log-q').oninput = renderLog;
+
+  $('csv').onclick = ()=>{ const l=filtered(); downloadCSV('vreymar-inventory-'+new Date().toISOString().slice(0,10)+'.csv', [['SKU','Name','Category','Brand','Price','Cost','Stock','Unit','Reorder level','Location','Status'], ...l.map(p=>[p.sku,p.name,Catalog.category(p.catId).name,p.brand,p.price,p.cost,p.stock,p.unit,p.threshold,p.location,Catalog.stockStatus(p).label])]); Admin.toast('Exported '+l.length+' products.','success'); };
+
+  function renderAll(){ stats(); catFilter(); renderProducts(); renderCats(); renderRestock(); renderLog(); }
+  renderAll();
+  const h = location.hash.slice(1); if(['products','categories','restock','log'].includes(h)) tab(h);
+})();
+</script>
+</body>
+</html>

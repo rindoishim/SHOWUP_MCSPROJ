@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Orders & Deliveries | Vreymar Staff Portal</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<script>try{var t=localStorage.getItem('vh-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="../assets/css/admin.css"/>
+<style>
+.stfilter{display:flex;gap:6px;flex-wrap:wrap}
+.stfilter button{padding:7px 13px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);font-size:12.5px;font-weight:700;color:var(--text-muted);cursor:pointer}
+.stfilter button.on{background:var(--fill);border-color:transparent;color:var(--on-fill)}
+.stfilter button span{opacity:.7;margin-left:3px}
+.od-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.od-box{background:var(--secondary);border-radius:var(--r-md);padding:12px 14px;font-size:13px}
+.od-box small{display:block;font-size:11.5px;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.tl{margin:10px 0 4px}
+.tl div{display:flex;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+.tl i{width:20px;height:20px;border-radius:50%;background:var(--border);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal;flex-shrink:0}
+.tl .done i{background:var(--success)}
+.tl .muted{font-size:12px}
+.proof-img{max-width:100%;max-height:260px;border-radius:var(--r-md);border:1px solid var(--border);display:block;margin-top:6px}
+.day{margin-bottom:16px}
+.day-h{font-family:var(--font-head);font-size:18px;font-weight:600;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.dv{display:grid;grid-template-columns:130px 1fr auto;gap:14px;align-items:center;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 14px;margin-bottom:8px;font-size:13px}
+.dv b{display:block}
+.rep{background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:12px}
+.rep-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+@media (max-width:700px){.od-grid{grid-template-columns:1fr}.dv{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="stats" id="stats"></div>
+  <div class="tabs">
+    <button class="tab on" data-t="orders">Online Orders</button>
+    <button class="tab" data-t="deliveries">Delivery Schedule</button>
+    <button class="tab" data-t="reps">Replacements <span class="cnt" id="rep-cnt"></span></button>
+  </div>
+
+  <section class="pane on" id="p-orders">
+    <div class="toolbar">
+      <div class="stfilter" id="stf"></div>
+      <div class="search" style="max-width:280px;margin-left:auto"><span></span><input class="input" id="q" placeholder="Ref #, customer, phone…"/></div>
+      <button class="btn btn-ghost" id="csv">CSV</button>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table>
+      <thead><tr><th>Ref #</th><th>Placed</th><th>Customer</th><th>Delivery</th><th>Payment</th><th class="r">Total</th><th>Status</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody></table></div></div>
+  </section>
+
+  <section class="pane" id="p-deliveries">
+    <div class="toolbar"><span class="muted" style="font-size:13px;flex:1">Active orders grouped by scheduled delivery date. Overdue deliveries are highlighted.</span></div>
+    <div id="deliv"></div>
+  </section>
+
+  <section class="pane" id="p-reps">
+    <div class="toolbar"><div class="stfilter" id="rf"></div></div>
+    <div id="reps"></div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="om"><div class="modal" style="width:700px">
+  <div class="modal-head"><div><span class="modal-title" id="om-t"></span><div class="muted" style="font-size:12.5px" id="om-s"></div></div><button class="modal-x" data-close="om">✕</button></div>
+  <div class="modal-body" id="om-body"></div>
+  <div class="modal-foot" id="om-foot"></div>
+</div></div>
+
+<div class="modal-overlay" id="rm"><div class="modal" style="width:460px">
+  <div class="modal-head"><span class="modal-title" id="rm-t">Review request</span><button class="modal-x" data-close="rm">✕</button></div>
+  <div class="modal-body">
+    <div id="rm-info" style="margin-bottom:12px"></div>
+    <label class="label" for="rm-note">Message to customer</label><textarea class="textarea" id="rm-note" placeholder="e.g. Approved. Replacement will be delivered with your next order."></textarea>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px" id="rm-stock-row"><input type="checkbox" id="rm-stock" checked/> Deduct replacement units from stock</label>
+  </div>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close="rm">Cancel</button><button class="btn" id="rm-ok"></button></div>
+</div></div>
+
+<script src="../assets/js/store.js"></script>
+<script src="../assets/js/art.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+(function(){
+  const user = Admin.init('orders','Orders & Deliveries'); if(!user) return;
+  const {Orders, Replacements, Catalog, Auth, ORDER_FLOW, ORDER_LABEL, PAY_LABEL, statusLabel, peso, pesoShort, esc, fmtDate, fmtDateTime, fmtLongDate, downloadCSV} = VH;
+  const $ = id => document.getElementById(id);
+  const me = Auth.fullName(user);
+  const SB = {pending:'b-yellow',confirmed:'b-blue',preparing:'b-indigo',out:'b-orange',delivered:'b-green',cancelled:'b-gray'};
+  const NEXT_LABEL = {pending:'Confirm order',confirmed:'Start preparing',preparing:'Mark out for delivery',out:'Mark completed'};
+  let stf = 'active', rf = 'all', current = null, repAction = null;
+
+  function tab(t){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===t)); document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t)); history.replaceState(null,'','#'+t); }
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>tab(t.dataset.t));
+
+  const sorted = () => Orders.all().slice().sort((a,b)=>new Date(b.placedAt)-new Date(a.placedAt));
+  const today0 = ()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
+
+  function stats(){
+    const o = Orders.all(); const reps = Replacements.all();
+    const c = s => o.filter(x=>x.status===s).length;
+    const todayStr = new Date().toISOString().slice(0,10);
+    $('stats').innerHTML = `
+      <div class="stat"><div class="stat-l">Pending confirmation</div><div class="stat-v">${c('pending')}</div><div class="stat-s">Needs review</div></div>
+      <div class="stat blue"><div class="stat-l">In progress</div><div class="stat-v">${c('confirmed')+c('preparing')+c('out')}</div><div class="stat-s">${c('out')} out for delivery</div></div>
+      <div class="stat purple"><div class="stat-l">Deliveries today</div><div class="stat-v">${o.filter(x=>x.schedule&&x.schedule.date===todayStr&&x.status!=='cancelled').length}</div></div>
+      <div class="stat green"><div class="stat-l">Delivered</div><div class="stat-v">${c('delivered')}</div><div class="stat-s">${pesoShort(o.filter(x=>x.status==='delivered').reduce((a,x)=>a+x.total,0))} revenue</div></div>
+      <div class="stat red"><div class="stat-l">Open replacements</div><div class="stat-v">${reps.filter(r=>['pending','waiting','processing','refunding'].includes(r.status)).length}</div></div>`;
+    const rp = reps.filter(r=>r.status==='pending').length; $('rep-cnt').textContent=rp||''; $('rep-cnt').style.display=rp?'':'none';
+    const F = [['active','Active'],['pending','Pending'],['confirmed','Confirmed'],['preparing','Preparing'],['out','Out for delivery'],['delivered','Delivered'],['cancelled','Cancelled'],['all','All']];
+    $('stf').innerHTML = F.map(([k,l])=>`<button data-f="${k}" class="${stf===k?'on':''}">${l}<span>${k==='all'?o.length:k==='active'?o.filter(x=>!['delivered','cancelled'].includes(x.status)).length:c(k)}</span></button>`).join('');
+  }
+
+  function filtered(){
+    const q = $('q').value.trim().toLowerCase();
+    return sorted().filter(o=>(stf==='all'||(stf==='active'?!['delivered','cancelled'].includes(o.status):o.status===stf)) && (!q || [o.ref,o.customer,o.phone,o.email].join(' ').toLowerCase().includes(q)));
+  }
+  function renderOrders(){
+    const l = filtered();
+    $('tbody').innerHTML = l.length ? l.map(o=>{ const late = o.schedule && !['delivered','cancelled'].includes(o.status) && new Date(o.schedule.date+'T00:00:00')<today0();
+      return `<tr><td><code>${o.ref}</code></td><td class="muted" style="font-size:12.5px;white-space:nowrap">${fmtDateTime(o.placedAt)}</td>
+      <td><b>${esc(o.customer)}</b><div class="muted" style="font-size:11.5px">${esc(o.phone)}</div></td>
+      <td style="font-size:12.5px;${late?'color:var(--danger);font-weight:700':''}">${o.schedule?fmtDate(o.schedule.date+'T00:00:00')+'<br><span class="muted">'+esc(o.schedule.slot)+'</span>':'-'}${late?' · overdue':''}</td>
+      <td style="font-size:12.5px">${PAY_LABEL[o.pay]}${o.pay!=='cod'?(o.proof?' <span class="badge b-green">proof</span>':' <span class="badge b-red">no proof</span>'):''}</td>
+      <td class="r"><b>${peso(o.total)}</b></td><td><span class="badge ${SB[o.status]}">${statusLabel(o)}</span></td>
+      <td><button class="btn btn-ghost btn-sm" data-open="${o.ref}">View</button></td></tr>`; }).join('') : '<tr><td colspan="8" class="empty"><div class="ic"></div>No orders in this view.</td></tr>';
+  }
+  $('stf').onclick = e=>{ const b=e.target.closest('[data-f]'); if(b){ stf=b.dataset.f; stats(); renderOrders(); } };
+  $('q').oninput = renderOrders;
+  $('tbody').onclick = e=>{ const b=e.target.closest('[data-open]'); if(b) openOrder(b.dataset.open); };
+
+  function openOrder(ref){
+    const o = Orders.get(ref); current = ref;
+    $('om-t').textContent = 'Order '+o.ref; $('om-s').textContent = 'Placed '+fmtDateTime(o.placedAt);
+    const cur = ORDER_FLOW.indexOf(o.status);
+    $('om-body').innerHTML = `
+      <div style="margin-bottom:12px"><span class="badge ${SB[o.status]}" style="font-size:12px">${statusLabel(o)}</span></div>
+      <div class="od-grid">
+        <div class="od-box"><small>Customer</small><b>${esc(o.customer)}</b><br>${esc(o.phone)}<br><span class="muted">${esc(o.email||'')}</span></div>
+        <div class="od-box"><small>Deliver to</small>${esc(o.address)}${o.notes?`<div class="muted" style="margin-top:4px">${esc(o.notes)}</div>`:''}</div>
+        <div class="od-box"><small>Schedule</small><b>${o.schedule?fmtLongDate(o.schedule.date+'T00:00:00'):'-'}</b><br>${o.schedule?esc(o.schedule.slot):''}</div>
+        <div class="od-box"><small>Payment</small><b>${PAY_LABEL[o.pay]}</b>${o.pay==='cod'?'<br><span class="muted">Collect '+peso(o.total)+' on delivery</span>':o.proof?(o.proof.data?`<img class="proof-img" src="${o.proof.data}" alt="Proof of payment"/>`:`<br>${esc(o.proof.name)} <span class="muted">(image not stored in this demo)</span>`):'<br><span style="color:var(--danger);font-weight:700">No proof uploaded</span>'}</div>
+      </div>
+      <table style="margin-bottom:12px"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>
+        ${o.items.map(i=>`<tr><td><b>${esc(i.name)}</b> <code>${esc(i.sku)}</code></td><td class="r">${i.qty} ${esc(i.unit||'')}</td><td class="r">${peso(i.price)}</td><td class="r"><b>${peso(i.price*i.qty)}</b></td></tr>`).join('')}
+        <tr><td colspan="3" class="r muted">Subtotal</td><td class="r">${peso(o.subtotal)}</td></tr>
+        ${o.discount?`<tr><td colspan="3" class="r muted">Promo ${esc(o.promo||'')}</td><td class="r" style="color:var(--danger)">-${peso(o.discount)}</td></tr>`:''}
+        <tr><td colspan="3" class="r muted">Delivery</td><td class="r">${o.fee?peso(o.fee):'FREE'}</td></tr>
+        <tr><td colspan="3" class="r muted">VAT 12%</td><td class="r">${peso(o.vat)}</td></tr>
+        <tr><td colspan="3" class="r"><b>Total</b></td><td class="r"><b style="font-family:var(--font-head);font-size:19px">${peso(o.total)}</b></td></tr>
+      </tbody></table>
+      <div class="label">Status history</div>
+      <div class="tl">${o.status==='cancelled' ? o.history.map(h=>`<div class="done"><i>✓</i>${statusLabel(o,h.status)} <span class="muted">${fmtDateTime(h.at)}${h.by?' · '+esc(h.by):''}</span></div>`).join('') :
+        ORDER_FLOW.map((s,i)=>{ const h=o.history.find(x=>x.status===s); return `<div class="${i<=cur?'done':''}"><i>${i<=cur?'✓':''}</i>${statusLabel(o,s)} <span class="muted">${h?fmtDateTime(h.at)+(h.by?' · '+esc(h.by):''):''}</span></div>`; }).join('')}</div>`;
+    const nx = Orders.nextStatus(o.status);
+    $('om-foot').innerHTML = (['pending','confirmed','preparing'].includes(o.status)?`<button class="btn btn-ghost" id="om-cancel" style="color:var(--danger);margin-right:auto">Cancel order</button>`:'') +
+      `<button class="btn btn-ghost" data-close="om">Close</button>` + (nx?`<button class="btn btn-primary" id="om-next">${o.method==='pickup'&&o.status==='preparing'?'Mark ready for pickup':NEXT_LABEL[o.status]}</button>`:'');
+    if(nx) $('om-next').onclick = ()=>{
+      if(o.status==='pending' && o.pay!=='cod' && !o.proof) return Admin.toast('This cashless order has no proof of payment yet.','warn');
+      Orders.setStatus(o.ref, nx, me); Admin.toast(o.ref+' → '+statusLabel(o,nx),'success'); refresh(); openOrder(o.ref);
+    };
+    const c = $('om-cancel'); if(c) c.onclick = async ()=>{
+      if(!await Admin.confirm('Cancel '+o.ref+'?','Reserved stock will be returned to inventory. Let the customer know about any refund.','Cancel order',true)) return;
+      Orders.setStatus(o.ref,'cancelled',me); Admin.toast(o.ref+' cancelled; stock restored.','danger'); refresh(); openOrder(o.ref);
+    };
+    Admin.openModal('om');
+  }
+
+  function renderDeliv(){
+    const act = Orders.all().filter(o=>!['delivered','cancelled'].includes(o.status) && o.schedule).sort((a,b)=>(a.schedule.date+a.schedule.slot).localeCompare(b.schedule.date+b.schedule.slot));
+    if(!act.length){ $('deliv').innerHTML = '<div class="card empty"><div class="ic"></div>No active deliveries scheduled.</div>'; return; }
+    const groups = {}; act.forEach(o=>(groups[o.schedule.date]=groups[o.schedule.date]||[]).push(o));
+    const t0 = today0();
+    $('deliv').innerHTML = Object.entries(groups).map(([d,os])=>{ const dt=new Date(d+'T00:00:00'); const late=dt<t0; const isToday=dt.getTime()===t0.getTime();
+      return `<div class="day"><div class="day-h">${fmtLongDate(dt)} ${isToday?'<span class="badge b-blue">Today</span>':''}${late?'<span class="badge b-red">Overdue</span>':''}</div>
+      ${os.map(o=>`<div class="dv"><div><b>${esc(o.schedule.slot)}</b><code>${o.ref}</code></div><div><b>${esc(o.customer)} · ${esc(o.phone)}</b><span class="muted">${esc(o.address)}</span><div class="muted" style="font-size:12px">${o.items.length} items · ${PAY_LABEL[o.pay]}${o.pay==='cod'?', collect '+peso(o.total):''}</div></div>
+        <div style="display:flex;gap:6px;align-items:center"><span class="badge ${SB[o.status]}">${statusLabel(o)}</span><button class="btn btn-ghost btn-sm" data-open="${o.ref}">Open</button></div></div>`).join('')}</div>`; }).join('');
+  }
+  $('deliv').onclick = e=>{ const b=e.target.closest('[data-open]'); if(b) openOrder(b.dataset.open); };
+
+  /* replacements, Final Defense Fig. 7.5: review -> approve/reject -> stock check -> process or Waiting for Stock */
+  const RB = {pending:'b-yellow',rejected:'b-red',waiting:'b-orange',processing:'b-blue',refunding:'b-indigo',completed:'b-green'};
+  function renderReps(){
+    const all = Replacements.all();
+    $('rf').innerHTML = [['pending','Pending review'],['waiting','Waiting for stock'],['processing','Being prepared'],['refunding','Refunding'],['completed','Completed'],['rejected','Rejected'],['all','All']].map(([k,l])=>`<button data-r="${k}" class="${rf===k?'on':''}">${l}<span>${k==='all'?all.length:all.filter(r=>r.status===k).length}</span></button>`).join('');
+    const l = all.filter(r=>rf==='all'||r.status===rf);
+    $('reps').innerHTML = l.length ? l.map(r=>{
+      const p = Catalog.product(r.itemId); const stock = p ? p.stock : 0;
+      const waited = Replacements.waitingDays(r);
+      let acts = '';
+      if(r.status==='pending') acts = `<button class="btn btn-success btn-sm" data-ra="approve" data-t="${r.ticket}">Approve</button><button class="btn btn-danger btn-sm" data-ra="reject" data-t="${r.ticket}">Reject</button>`;
+      if(r.status==='waiting') acts = `<button class="btn btn-primary btn-sm" data-ra="fulfil" data-t="${r.ticket}" ${stock<r.qty?'disabled':''}>Stock arrived, send replacement</button><button class="btn btn-ghost btn-sm" data-ra="refund" data-t="${r.ticket}">Refund instead</button>`;
+      if(r.status==='processing') acts = `<button class="btn btn-success btn-sm" data-ra="done" data-t="${r.ticket}">Mark replacement delivered</button>`;
+      if(r.status==='refunding') acts = `<button class="btn btn-success btn-sm" data-ra="done" data-t="${r.ticket}">Mark refund paid (${peso(r.quote)})</button>`;
+      return `<div class="rep">
+      <div class="rep-h"><div><b>${r.ticket}</b> · <code>${r.orderRef}</code> <span class="muted" style="font-size:12px">filed ${fmtDateTime(r.filedAt)}</span></div><span class="badge ${RB[r.status]||'b-gray'}">${Replacements.label(r.status)}</span></div>
+      <div style="font-size:14px"><b>${esc(r.itemName)}</b> × ${r.qty} · quotation <b>${peso(r.quote)}</b> · stock now <b style="color:${stock>=r.qty?'var(--success)':'var(--danger)'}">${stock}</b></div>
+      <div class="muted" style="font-size:13px;margin:3px 0">${esc(r.customer)} · ${esc(r.phone||'')} · ${esc(r.reason)} · wants a <b>${esc(r.resolution.toLowerCase())}</b>${r.resolution==='Replacement'?' · if out of stock: <b>'+(r.ifUnavailable==='refund'?'refund':'wait')+'</b>':''}</div>
+      <div style="font-size:13px;background:var(--secondary);padding:9px 12px;margin:8px 0">“${esc(r.desc)}”</div>
+      ${r.status==='waiting'?`<div style="font-size:13px;margin-bottom:6px;color:${waited>=VH.RULES.STOCK_WAIT_DAYS?'var(--danger)':'var(--text-muted)'}">Waiting ${waited} of ${VH.RULES.STOCK_WAIT_DAYS} days${waited>=VH.RULES.STOCK_WAIT_DAYS?', refund is now due':''}</div>`:''}
+      ${r.notes.map(n=>`<div class="muted" style="font-size:12px">${Replacements.label(n.status)} · ${esc(n.by)} · ${fmtDateTime(n.at)}${n.note?': '+esc(n.note):''}</div>`).join('')}
+      ${acts?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${acts}</div>`:''}
+    </div>`; }).join('') : '<div class="card empty">No replacement requests here.</div>';
+  }
+  $('rf').onclick = e=>{ const b=e.target.closest('[data-r]'); if(b){ rf=b.dataset.r; renderReps(); } };
+  $('reps').onclick = async e=>{
+    const b = e.target.closest('[data-ra]'); if(!b) return;
+    const r = Replacements.all().find(x=>x.ticket===b.dataset.t); const a = b.dataset.ra;
+    if(a==='fulfil'){ const res = Replacements.fulfil(r.ticket, me); Admin.toast(res.ok ? r.ticket+': stock reserved, replacement being prepared.' : res.msg, res.ok?'success':'warn'); refresh(); return; }
+    if(a==='refund'){ if(!await Admin.confirm('Refund '+r.ticket+' instead?','The customer gets '+peso(r.quote)+' back and no replacement is sent.','Refund')) return; Replacements.setStatus(r.ticket,'refunding','Refunding instead of waiting for stock.',me); refresh(); return; }
+    if(a==='done'){ Replacements.setStatus(r.ticket,'completed', r.status==='refunding' ? 'Refund of '+peso(r.quote)+' paid.' : 'Replacement delivered.', me); Admin.toast(r.ticket+' completed.','success'); refresh(); return; }
+    repAction = {ticket:r.ticket, action:a};
+    const p = Catalog.product(r.itemId);
+    $('rm-t').textContent = (a==='approve'?'Approve ':'Reject ')+r.ticket;
+    $('rm-info').innerHTML = `<b>${esc(r.itemName)}</b> × ${r.qty}, ${esc(r.reason)}<div class="muted" style="font-size:12.5px;margin-top:4px">Customer wants a ${esc(r.resolution.toLowerCase())}. ${a==='approve' && r.resolution==='Replacement' ? (p && p.stock>=r.qty ? 'In stock ('+p.stock+'), it will be reserved now.' : 'Out of stock, the request will be set to '+(r.ifUnavailable==='refund'?'a refund, as the customer chose.':'Waiting for Stock.')) : ''}</div>`;
+    $('rm-note').value = ''; $('rm-stock-row').style.display = 'none';
+    $('rm-ok').textContent = a==='approve'?'Approve request':'Reject request'; $('rm-ok').className = 'btn '+(a==='approve'?'btn-success':'btn-danger');
+    Admin.openModal('rm');
+  };
+  $('rm-ok').onclick = ()=>{
+    const r = Replacements.all().find(x=>x.ticket===repAction.ticket);
+    const note = $('rm-note').value.trim();
+    if(repAction.action==='reject'){
+      if(!note) return Admin.toast('Tell the customer why it was rejected.','warn');
+      Replacements.setStatus(r.ticket,'rejected',note,me); Admin.toast(r.ticket+' rejected.','danger');
+    } else {
+      const res = Replacements.approve(r.ticket, note, me);
+      Admin.toast(r.ticket+': '+Replacements.label(res.status)+'.', 'success');
+    }
+    Admin.closeModal('rm'); refresh();
+  };
+
+  $('csv').onclick = ()=>{ const l=filtered(); downloadCSV('vreymar-orders-'+new Date().toISOString().slice(0,10)+'.csv', [['Ref','Placed','Customer','Phone','Address','Delivery date','Slot','Payment','Subtotal','Discount','Delivery','VAT','Total','Status'], ...l.map(o=>[o.ref,fmtDateTime(o.placedAt),o.customer,o.phone,o.address,o.schedule?o.schedule.date:'',o.schedule?o.schedule.slot:'',PAY_LABEL[o.pay],o.subtotal.toFixed(2),(o.discount||0).toFixed(2),o.fee.toFixed(2),o.vat.toFixed(2),o.total.toFixed(2),ORDER_LABEL[o.status]])]); Admin.toast('Exported '+l.length+' orders.','success'); };
+
+  function refresh(){ stats(); renderOrders(); renderDeliv(); renderReps(); }
+  refresh();
+  const h = location.hash.slice(1); if(['orders','deliveries','reps'].includes(h)) tab(h);
+})();
+</script>
+</body>
+</html>
